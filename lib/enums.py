@@ -35,11 +35,14 @@ class GpioBmcEnums(IntEnum):
 
 @unique
 class DevicesIdEnums(Enum):
+
     DEFAULT_BUZZER = 'default-buzzer'
 
     DEFAULT_SMOG = 'default-smog'
 
-    DEFAULT_THERMOMETER = "default-thermometer"
+    DEFAULT_THERMOMETER = 'default-thermometer'
+
+    DEFAULT_NIXIE_TUBE = 'default-nixie-tube'
 
 
 class Constants(Enum):
