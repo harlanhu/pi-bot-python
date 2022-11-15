@@ -109,17 +109,17 @@ class NixieTube(Device):
     a-g 控制显示内容
     """
     zero = [0, 0, 0, 0, 0, 0, 1, 1]
-    one = [0, 0, 1, 0, 0, 1, 0, 1]
-    two = [0, 0, 0, 0, 1, 1, 0, 1]
-    three = [1, 0, 0, 1, 1, 0, 0, 1]
-    four = [0, 1, 0, 0, 1, 0, 0, 1]
-    five = [0, 1, 0, 0, 0, 0, 0, 1]
-    six = [1, 0, 1, 1, 1, 1, 1, 1]
-    seven = [0, 0, 0, 0, 1, 1, 1, 1]
+    one = [1, 0, 0, 1, 1, 1, 1, 1]
+    two = [0, 0, 1, 0, 0, 1, 0, 1]
+    three = [0, 0, 0, 0, 1, 1, 0, 1]
+    four = [1, 0, 0, 1, 1, 0, 0, 1]
+    five = [0, 1, 0, 0, 1, 0, 0, 1]
+    six = [0, 1, 0, 0, 0, 0, 0, 1]
+    seven = [0, 0, 0, 1, 1, 1, 1, 1]
     eight = [0, 0, 0, 0, 0, 0, 0, 1]
     nine = [0, 0, 0, 0, 1, 0, 0, 1]
 
-    refresh_time = 0.005
+    refresh_time = 0.0005
 
     def __init__(self, device_id, channel_1, channel_2, channel_3, channel_4,
                  channel_a, channel_b, channel_c, channel_d, channel_e, channel_f, channel_g, channel_dp):
