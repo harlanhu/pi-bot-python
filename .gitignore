@@ -128,14 +128,10 @@ dmypy.json
 .pyre/
 
 # Default ignored files
-./.idea
+.idea
 /shelf/
 /workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
 /dataSources/
-/dataSources.local.xml
-x
-/.idea/workspace.xml
-/.idea/pi-bot.iml
