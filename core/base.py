@@ -1,12 +1,10 @@
-import time
-
 from core.devices import Buzzer, Smog, Thermometer, Constants, DeviceManager, NixieTube
-from lib.enums import DevicesIdEnums, GpioBmcEnums
-from lib.function import Function, SmokeDetectionFunction
+from lib.enums import DevicesIdEnums, GpioBmcEnums, FunctionIdEnums
+from lib.function import Function, SmokeDetectionFunction, NixieDisplayFunction
 from core.gpio import GPIO
 
 
-class Bot:
+class FunctionManager:
 
     def __init__(self):
         print("RPI INFO:" + str(GPIO.RPI_INFO))
@@ -29,33 +27,25 @@ class Bot:
 
     # 烟雾探测
     def smoke_detection(self):
-        self.buzzer.loop()
-        smoke_detection_function = SmokeDetectionFunction('smoke_detection', self.buzzer, self.smog)
-        self.function_threads_dict.update({smoke_detection_function.thread_id: smoke_detection_function})
+        smoke_detection_function = SmokeDetectionFunction(FunctionIdEnums.SMOKE_DETECTION, self.buzzer, self.smog)
+        self.function_threads_dict.update({
+            smoke_detection_function.thread_id: smoke_detection_function,
+        })
         smoke_detection_function.start()
 
-    def show_time(self):
-        start_time = time.time()
-        while True:
-            now = time.time()
-            count = now - start_time
-            time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_character(3, int(count / 1000))
-            time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_character(2, int(count % 1000 / 100))
-            time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_character(1, int(count % 100 / 10))
-            time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_character(0, int(count % 10))
-            if count >= 9999:
-                start_time = time.time()
+    def display_roll(self):
+        time_display = NixieDisplayFunction(FunctionIdEnums.Nixie_DISPLAY, self.nixie_tube)
+        self.function_threads_dict.update({
+            time_display.thread_id: time_display
+        })
+        time_display.start()
 
     def stop_function(self, function_id):
         function = self.function_threads_dict.get(function_id)  # type:Function
         function.off()
 
     def off(self):
-        for function in self.function_threads_dict:
+        for function in self.function_threads_dict.values():
             function.off()
             self.function_threads_dict.pop(function)
         self.device_manager.devices = {}

@@ -1,3 +1,4 @@
+import datetime
 import time
 from lib.enums import DevicesIdEnums, Constants, GpioBmcEnums
 
@@ -107,6 +108,15 @@ class NixieTube(Device):
     """
     1，2，3，4 gpio控制第几个数字发光，dp控制点
     a-g 控制显示内容
+
+       __A__
+      |     |    |  0 ->  011 1111 -> 0x3f
+    F |     | B  |  1 ->  010 0001 -> 0x21
+      |__G__|    |  2 ->  111 0110 -> 0x76
+      |     |    |  4 ->  ...
+    E |     | C  |        ...
+      |__D__| DP |  9 ->  ...      -> 0x5f
+
     """
 
     alphabet = {
@@ -131,7 +141,24 @@ class NixieTube(Device):
         'I': [0, 0, 0, 0, 1, 1, 1, 1],
         'J': [0, 1, 1, 1, 0, 0, 0, 1],
         'K': [0, 1, 0, 1, 0, 0, 0, 1],
-        'L': [1, 1, 1, 0, 0, 0, 1, 1]
+        'L': [1, 1, 1, 0, 0, 0, 1, 1],
+        'M': [0, 0, 0, 1, 0, 0, 1, 1],
+        'N': [1, 1, 0, 1, 0, 1, 0, 1],
+        'O': [1, 1, 0, 0, 0, 1, 0, 1],
+        'P': [0, 0, 1, 1, 0, 0, 0, 1],
+        'Q': [0, 0, 0, 1, 1, 0, 0, 1],
+        'R': [0, 1, 1, 1, 0, 0, 1, 1],
+        'S': [0, 1, 1, 0, 1, 1, 0, 1],
+        'T': [1, 1, 1, 0, 0, 0, 0, 1],
+        'U': [1, 0, 0, 0, 0, 0, 1, 1],
+        'V': [1, 1, 0, 0, 0, 1, 1, 1],
+        'W': [1, 0, 0, 0, 0, 0, 0, 1],
+        'X': [1, 1, 0, 1, 1, 0, 0, 1],
+        'Y': [1, 0, 0, 0, 1, 0, 0, 1],
+        'Z': [1, 0, 1, 0, 0, 1, 0, 1],
+        ' ': [1, 1, 1, 1, 1, 1, 1, 1],
+        '-': [1, 1, 1, 1, 1, 1, 0, 1],
+        '|': [1, 1, 1, 1, 0, 0, 1, 1]
     }
 
     refresh_time = 0.0005
@@ -139,7 +166,7 @@ class NixieTube(Device):
     def __init__(self, device_id, channel_1, channel_2, channel_3, channel_4,
                  channel_a, channel_b, channel_c, channel_d, channel_e, channel_f, channel_g, channel_dp):
         super().__init__(device_id)
-        self.sequence = [channel_4, channel_3, channel_2, channel_1]
+        self.sequence = [channel_1, channel_2, channel_3, channel_4]
         self.channels = [channel_a, channel_b, channel_c, channel_d,
                          channel_e, channel_f, channel_g, channel_dp]
         self.all_channels = [channel_1, channel_2, channel_3, channel_4,
@@ -157,16 +184,64 @@ class NixieTube(Device):
         GPIO.output(self.all_channels, GPIO.LOW)
 
     def show_character(self, sequence, c, has_dot=False):
-        val = str(c)
-        if not val.isalnum():
-            val.upper()
-        states = self.alphabet.get(c)
-        if has_dot:
-            states[7] = 0
         # 先将负极拉低，关掉显示
         GPIO.output(self.sequence, GPIO.LOW)
+        val = str(c)
+        if not val.isnumeric():
+            val = val.upper()
+        states = self.alphabet.get(val)
+        if states is None:
+            return
+        if has_dot:
+            states[7] = 0
         GPIO.output(self.channels, states)
         GPIO.output(self.sequence[sequence], GPIO.HIGH)
 
-    def show_str(self, val):
-        pass
+    def display_content(self, content, interval=0):
+        content_len = len(str(content))
+        if interval == 0 and content_len > 4:
+            interval = 0.7
+        else:
+            interval = 5.0
+        if content_len > 4:
+            self.display_long_str(content, interval)
+        else:
+            self.display_str(content, interval)
+
+    def display_str(self, val, interval=5.0):
+        val = str(val)
+        start_time = time.time()
+        while time.time() - start_time <= interval:
+            for i in range(4):
+                self.show_character(i, val[i])
+                time.sleep(self.refresh_time)
+
+    def display_long_str(self, val, interval=0.7):
+        vals = '*' * 4 + str(val)
+        fill_num = len(vals) % 4
+        vals = vals + '*' * (fill_num + 4)
+        dot_count = 0
+        for i in range(0, len(vals) - 4):
+            once_val = vals[i] + vals[i + 1] + vals[i + 2] + vals[i + 3]
+            self.display_str(once_val, interval)
+
+    def display_time(self, interval):
+        stat_time = time.time()
+        while time.time() - stat_time <= interval:
+            now = datetime.datetime.now()
+            hour = now.hour.numerator
+            minute = now.minute.numerator
+            time.sleep(self.refresh_time)
+            self.show_character(0, int(hour / 10))
+            time.sleep(self.refresh_time)
+            self.show_character(1, hour % 10, True)
+            time.sleep(self.refresh_time)
+            self.show_character(2, int(minute / 10))
+            time.sleep(self.refresh_time)
+            self.show_character(3, minute % 10)
+
+    def display_warning(self, interval, cycle):
+        for i in range(cycle):
+            self.display_str(8888, 0.3)
+            time.sleep(interval)
+

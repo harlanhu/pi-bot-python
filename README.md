@@ -1,2 +1,2 @@
 # pi-bot
-RaspberryPi Bot
+RaspberryPi FunctionManager

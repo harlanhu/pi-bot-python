@@ -35,7 +35,6 @@ class GpioBmcEnums(IntEnum):
 
 @unique
 class DevicesIdEnums(Enum):
-
     DEFAULT_BUZZER = 'default-buzzer'
 
     DEFAULT_SMOG = 'default-smog'
@@ -45,8 +44,15 @@ class DevicesIdEnums(Enum):
     DEFAULT_NIXIE_TUBE = 'default-nixie-tube'
 
 
-class Constants(Enum):
+@unique
+class FunctionIdEnums(Enum):
 
+    SMOKE_DETECTION = 'smoke-detection'
+
+    Nixie_DISPLAY = 'nixie-display'
+
+
+class Constants(Enum):
     DO_TYPE = 0
 
     AO_TYPE = 1
