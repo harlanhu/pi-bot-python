@@ -34,7 +34,7 @@ class FunctionManager:
         smoke_detection_function.start()
 
     def display_roll(self):
-        time_display = NixieDisplayFunction(FunctionIdEnums.Nixie_DISPLAY, self.nixie_tube)
+        time_display = NixieDisplayFunction(FunctionIdEnums.Nixie_DISPLAY, self.nixie_tube, self.thermometer)
         self.function_threads_dict.update({
             time_display.thread_id: time_display
         })

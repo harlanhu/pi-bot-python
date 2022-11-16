@@ -1,6 +1,6 @@
 import threading
 import time
-from core.devices import NixieTube, Buzzer, Smog
+from core.devices import NixieTube, Buzzer, Smog, Thermometer
 
 
 class Function(threading.Thread):
@@ -34,12 +34,23 @@ class SmokeDetectionFunction(Function):
 
 class NixieDisplayFunction(Function):
 
-    def __init__(self, thread_id, nixie_tube: NixieTube, keep_running=True):
+    def __init__(self, thread_id, nixie_tube: NixieTube, thermometer: Thermometer, keep_running=True):
         super().__init__(thread_id, keep_running)
         self.nixie_tube = nixie_tube
+        self.thermometer = thermometer
         self.lock = threading.RLock()
 
     def run(self):
         while True:
             self.nixie_tube.display_time(10)
+            result = self.thermometer.detection()
+            if result:
+                humidity, temperature = result
+                self.nixie_tube.display_symbol_num(temperature, '^', 10)
+                self.nixie_tube.display_symbol_num(humidity, '%', 10)
+            else:
+                print("Thermometer data are wrong,skip")
             self.nixie_tube.display_content("Hello World")
+
+
+

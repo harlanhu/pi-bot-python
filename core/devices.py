@@ -1,8 +1,9 @@
 import datetime
 import time
-from lib.enums import DevicesIdEnums, Constants, GpioBmcEnums
-
+import numpy as np
+from lib.enums import DevicesIdEnums, Constants
 from core.gpio import GPIO
+import Adafruit_DHT
 
 
 class Device:
@@ -98,9 +99,69 @@ class Thermometer(Device):
     def __init__(self, device_id, channel):
         super().__init__(device_id)
         self.channel = channel
-        self.data = []
-        # 上电后延迟1s，排除传感器不稳定状态
-        time.sleep(1)
+        self.hsa_setup = False
+
+    def detection_test(self):
+        print("========DHT11 Detection========")
+        GPIO.setup(self.channel, GPIO.OUT)
+        GPIO.output(self.channel, GPIO.LOW)
+        # 给信号提示传感器开始工作,并保持低电平18ms以上
+        time.sleep(0.02)
+        # 输出高电平
+        GPIO.output(self.channel, GPIO.HIGH)
+        # 发送完开始信号后把输出模式换成输入模式，不然信号线上电平始终被拉高
+        GPIO.setup(self.channel, GPIO.IN)
+        print("completion of signal transmission...")
+        # DHT11发出应答信号，输出 80 微秒的低电平
+        while GPIO.input(self.channel) == GPIO.LOW:
+            print('wait for DHT11 response...')
+            continue
+        # 紧接着输出 80 微秒的高电平通知外设准备接收数据
+        while GPIO.input(self.channel) == GPIO.HIGH:
+            print('wait for DHT11 transmit data...')
+            continue
+        print('raspberry pi receiving data...')
+        # 开始接收数据
+        count = 0  # 计数器
+        data = []  # 收到的二进制数据
+        while count < 40:
+            # 先是 50 微秒的低电平
+            while GPIO.input(self.channel) == GPIO.LOW:
+                continue
+            start_time = time.time()
+            # 接着是26-28微秒的高电平，或者 70 微秒的高电平
+            while GPIO.input(self.channel) != GPIO.HIGH:
+                continue
+            spend_time = time.time() - start_time
+            if 0.000025 < spend_time < 0.000029:
+                # 26-28 微秒时高电平
+                data.append(0)
+            else:
+                # 70 微秒时高电平
+                data.append(1)
+            count += 1
+        print('completion of reception, processing data...')
+        # logspace()函数用于创建一个于等比数列的数组
+        series = np.logspace(7, 0, 8, base=2, dtype=int)
+        # 将data列表转换为数组
+        data_array = np.array(data)
+        # dot()函数对于两个一维的数组，计算的是这两个数组对应下标元素的乘积和(数学上称之为内积)
+        humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
+        humidity_point = series.dot(data_array[8:16])
+        temperature = series.dot(data_array[16:24])
+        temperature_point = series.dot(data_array[24:32])
+        check = series.dot(data_array[32:40])
+        tmp = humidity + humidity_point + temperature + temperature_point
+        print('return to the result')
+        # 十进制的数据相加
+        if check == tmp:  # 数据校验，相等则输出
+            return humidity, temperature
+        else:  # 错误输出错误信息
+            return False
+
+    def detection(self):
+        humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        return humidity, temperature
 
 
 # 数码管
@@ -158,7 +219,9 @@ class NixieTube(Device):
         'Z': [1, 0, 1, 0, 0, 1, 0, 1],
         ' ': [1, 1, 1, 1, 1, 1, 1, 1],
         '-': [1, 1, 1, 1, 1, 1, 0, 1],
-        '|': [1, 1, 1, 1, 0, 0, 1, 1]
+        '|': [1, 1, 1, 1, 0, 0, 1, 1],
+        '^': [1, 1, 1, 0, 0, 1, 0, 1],
+        '%': [1, 1, 1, 1, 0, 1, 0, 1]
     }
 
     refresh_time = 0.0005
@@ -179,11 +242,11 @@ class NixieTube(Device):
         stat_time = time.time()
         while time.time() - stat_time < 1:
             for seq in range(4):
-                self.show_character(seq, 8)
+                self.display_character(seq, 8)
                 time.sleep(self.refresh_time)
         GPIO.output(self.all_channels, GPIO.LOW)
 
-    def show_character(self, sequence, c, has_dot=False):
+    def display_character(self, sequence, c, has_dot=False):
         # 先将负极拉低，关掉显示
         GPIO.output(self.sequence, GPIO.LOW)
         val = str(c)
@@ -196,6 +259,10 @@ class NixieTube(Device):
             states[7] = 0
         GPIO.output(self.channels, states)
         GPIO.output(self.sequence[sequence], GPIO.HIGH)
+
+    def display_refresh(self, sequence, c, has_dot=False):
+        time.sleep(self.refresh_time)
+        self.display_character(sequence, c, has_dot)
 
     def display_content(self, content, interval=0):
         content_len = len(str(content))
@@ -213,14 +280,14 @@ class NixieTube(Device):
         start_time = time.time()
         while time.time() - start_time <= interval:
             for i in range(4):
-                self.show_character(i, val[i])
+                self.display_character(i, val[i])
                 time.sleep(self.refresh_time)
+        GPIO.output(self.sequence, GPIO.LOW)
 
     def display_long_str(self, val, interval=0.7):
         vals = '*' * 4 + str(val)
         fill_num = len(vals) % 4
         vals = vals + '*' * (fill_num + 4)
-        dot_count = 0
         for i in range(0, len(vals) - 4):
             once_val = vals[i] + vals[i + 1] + vals[i + 2] + vals[i + 3]
             self.display_str(once_val, interval)
@@ -232,16 +299,29 @@ class NixieTube(Device):
             hour = now.hour.numerator
             minute = now.minute.numerator
             time.sleep(self.refresh_time)
-            self.show_character(0, int(hour / 10))
+            self.display_character(0, int(hour / 10))
             time.sleep(self.refresh_time)
-            self.show_character(1, hour % 10, True)
+            self.display_character(1, hour % 10, True)
             time.sleep(self.refresh_time)
-            self.show_character(2, int(minute / 10))
+            self.display_character(2, int(minute / 10))
             time.sleep(self.refresh_time)
-            self.show_character(3, minute % 10)
+            self.display_character(3, minute % 10)
+        GPIO.output(self.sequence, GPIO.LOW)
+
+    def display_symbol_num(self, num, symbol, interval):
+        decade = int(num / 10)
+        single_digit = int(num % 10)
+        decimal = int((num - (single_digit + decade * 10)) * 10)
+        stat_time = time.time()
+        while time.time() - stat_time <= interval:
+            self.display_refresh(0, decade)
+            self.display_refresh(1, single_digit, True)
+            self.display_refresh(2, decimal)
+            self.display_refresh(3, symbol)
+        GPIO.output(self.sequence, GPIO.LOW)
 
     def display_warning(self, interval, cycle):
         for i in range(cycle):
             self.display_str(8888, 0.3)
             time.sleep(interval)
-
+        GPIO.output(self.sequence, GPIO.LOW)
