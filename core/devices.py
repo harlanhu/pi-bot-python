@@ -108,16 +108,31 @@ class NixieTube(Device):
     1，2，3，4 gpio控制第几个数字发光，dp控制点
     a-g 控制显示内容
     """
-    zero = [0, 0, 0, 0, 0, 0, 1, 1]
-    one = [1, 0, 0, 1, 1, 1, 1, 1]
-    two = [0, 0, 1, 0, 0, 1, 0, 1]
-    three = [0, 0, 0, 0, 1, 1, 0, 1]
-    four = [1, 0, 0, 1, 1, 0, 0, 1]
-    five = [0, 1, 0, 0, 1, 0, 0, 1]
-    six = [0, 1, 0, 0, 0, 0, 0, 1]
-    seven = [0, 0, 0, 1, 1, 1, 1, 1]
-    eight = [0, 0, 0, 0, 0, 0, 0, 1]
-    nine = [0, 0, 0, 0, 1, 0, 0, 1]
+
+    alphabet = {
+        '0': [0, 0, 0, 0, 0, 0, 1, 1],
+        '1': [1, 0, 0, 1, 1, 1, 1, 1],
+        '2': [0, 0, 1, 0, 0, 1, 0, 1],
+        '3': [0, 0, 0, 0, 1, 1, 0, 1],
+        '4': [1, 0, 0, 1, 1, 0, 0, 1],
+        '5': [0, 1, 0, 0, 1, 0, 0, 1],
+        '6': [0, 1, 0, 0, 0, 0, 0, 1],
+        '7': [0, 0, 0, 1, 1, 1, 1, 1],
+        '8': [0, 0, 0, 0, 0, 0, 0, 1],
+        '9': [0, 0, 0, 0, 1, 0, 0, 1],
+        'A': [0, 0, 0, 1, 0, 0, 0, 1],
+        'B': [1, 1, 0, 0, 0, 0, 0, 1],
+        'C': [0, 1, 1, 0, 0, 0, 1, 1],
+        'D': [1, 0, 0, 0, 0, 1, 0, 1],
+        'E': [0, 1, 1, 0, 0, 0, 0, 1],
+        'F': [0, 1, 1, 1, 0, 0, 0, 1],
+        'G': [0, 1, 0, 0, 0, 0, 1, 1],
+        'H': [1, 0, 0, 1, 0, 0, 0, 1],
+        'I': [0, 0, 0, 0, 1, 1, 1, 1],
+        'J': [0, 1, 1, 1, 0, 0, 0, 1],
+        'K': [0, 1, 0, 1, 0, 0, 0, 1],
+        'L': [1, 1, 1, 0, 0, 0, 1, 1]
+    }
 
     refresh_time = 0.0005
 
@@ -137,33 +152,21 @@ class NixieTube(Device):
         stat_time = time.time()
         while time.time() - stat_time < 1:
             for seq in range(4):
-                self.show_digit(seq, 8)
+                self.show_character(seq, 8)
                 time.sleep(self.refresh_time)
         GPIO.output(self.all_channels, GPIO.LOW)
 
-    def show_digit(self, sequence, num):
+    def show_character(self, sequence, c, has_dot=False):
+        val = str(c)
+        if not val.isalnum():
+            val.upper()
+        states = self.alphabet.get(c)
+        if has_dot:
+            states[7] = 0
         # 先将负极拉低，关掉显示
         GPIO.output(self.sequence, GPIO.LOW)
-        channels = []
-        if num == 0:
-            channels = self.zero
-        elif num == 1:
-            channels = self.one
-        elif num == 2:
-            channels = self.two
-        elif num == 3:
-            channels = self.three
-        elif num == 4:
-            channels = self.four
-        elif num == 5:
-            channels = self.five
-        elif num == 6:
-            channels = self.six
-        elif num == 7:
-            channels = self.seven
-        elif num == 8:
-            channels = self.eight
-        elif num == 9:
-            channels = self.nine
-        GPIO.output(self.channels, channels)
+        GPIO.output(self.channels, states)
         GPIO.output(self.sequence[sequence], GPIO.HIGH)
+
+    def show_str(self, val):
+        pass

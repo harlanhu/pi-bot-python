@@ -2,8 +2,7 @@ import time
 
 from core.devices import Buzzer, Smog, Thermometer, Constants, DeviceManager, NixieTube
 from lib.enums import DevicesIdEnums, GpioBmcEnums
-from lib.function import Function
-from lib.function_thread import SmokeDetectionFunction
+from lib.function import Function, SmokeDetectionFunction
 from core.gpio import GPIO
 
 
@@ -41,22 +40,22 @@ class Bot:
             now = time.time()
             count = now - start_time
             time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_digit(3, int(count / 1000))
+            self.nixie_tube.show_character(3, int(count / 1000))
             time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_digit(2, int(count % 1000 / 100))
+            self.nixie_tube.show_character(2, int(count % 1000 / 100))
             time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_digit(1, int(count % 100 / 10))
+            self.nixie_tube.show_character(1, int(count % 100 / 10))
             time.sleep(self.nixie_tube.refresh_time)
-            self.nixie_tube.show_digit(0, int(count % 10))
+            self.nixie_tube.show_character(0, int(count % 10))
             if count >= 9999:
                 start_time = time.time()
 
     def stop_function(self, function_id):
         function = self.function_threads_dict.get(function_id)  # type:Function
-        function.stop()
+        function.off()
 
     def off(self):
         for function in self.function_threads_dict:
-            function.stop()
+            function.off()
             self.function_threads_dict.pop(function)
         self.device_manager.devices = {}
