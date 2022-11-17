@@ -50,7 +50,7 @@ class NixieDisplayFunction(Function):
                 self.nixie_tube.display_symbol_num(humidity, '%', 10)
             else:
                 print("Thermometer data are wrong,skip")
-            self.nixie_tube.display_content("Hello World")
+            self.nixie_tube.display_content('Happy Birthday')
 
 
 

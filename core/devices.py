@@ -248,6 +248,7 @@ class NixieTube(Device):
 
     def display_character(self, sequence, c, has_dot=False):
         # 先将负极拉低，关掉显示
+        GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
         val = str(c)
         if not val.isnumeric():
@@ -257,12 +258,14 @@ class NixieTube(Device):
             return
         if has_dot:
             states[7] = 0
+        else:
+            states[7] = 1
         GPIO.output(self.channels, states)
         GPIO.output(self.sequence[sequence], GPIO.HIGH)
 
     def display_refresh(self, sequence, c, has_dot=False):
-        time.sleep(self.refresh_time)
         self.display_character(sequence, c, has_dot)
+        time.sleep(self.refresh_time)
 
     def display_content(self, content, interval=0):
         content_len = len(str(content))
@@ -282,6 +285,7 @@ class NixieTube(Device):
             for i in range(4):
                 self.display_character(i, val[i])
                 time.sleep(self.refresh_time)
+        GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
 
     def display_long_str(self, val, interval=0.7):
@@ -291,6 +295,8 @@ class NixieTube(Device):
         for i in range(0, len(vals) - 4):
             once_val = vals[i] + vals[i + 1] + vals[i + 2] + vals[i + 3]
             self.display_str(once_val, interval)
+        GPIO.output(self.all_channels, GPIO.LOW)
+        GPIO.output(self.sequence, GPIO.LOW)
 
     def display_time(self, interval):
         stat_time = time.time()
@@ -298,14 +304,11 @@ class NixieTube(Device):
             now = datetime.datetime.now()
             hour = now.hour.numerator
             minute = now.minute.numerator
-            time.sleep(self.refresh_time)
-            self.display_character(0, int(hour / 10))
-            time.sleep(self.refresh_time)
-            self.display_character(1, hour % 10, True)
-            time.sleep(self.refresh_time)
-            self.display_character(2, int(minute / 10))
-            time.sleep(self.refresh_time)
-            self.display_character(3, minute % 10)
+            self.display_refresh(0, int(hour / 10))
+            self.display_refresh(1, hour % 10, True)
+            self.display_refresh(2, int(minute / 10))
+            self.display_refresh(3, minute % 10)
+        GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
 
     def display_symbol_num(self, num, symbol, interval):
@@ -318,10 +321,12 @@ class NixieTube(Device):
             self.display_refresh(1, single_digit, True)
             self.display_refresh(2, decimal)
             self.display_refresh(3, symbol)
+        GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
 
     def display_warning(self, interval, cycle):
         for i in range(cycle):
             self.display_str(8888, 0.3)
             time.sleep(interval)
+        GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
