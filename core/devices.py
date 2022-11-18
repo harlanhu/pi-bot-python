@@ -1,9 +1,10 @@
+import array
 import datetime
 import time
-import numpy as np
+# import numpy as np
 from lib.enums import DevicesIdEnums, Constants
 from core.gpio import GPIO
-import Adafruit_DHT
+# import Adafruit_DHT
 
 
 class Device:
@@ -142,26 +143,27 @@ class Thermometer(Device):
             count += 1
         print('completion of reception, processing data...')
         # logspace()函数用于创建一个于等比数列的数组
-        series = np.logspace(7, 0, 8, base=2, dtype=int)
+        # series = np.logspace(7, 0, 8, base=2, dtype=int)
         # 将data列表转换为数组
-        data_array = np.array(data)
+        # data_array = np.array(data)
         # dot()函数对于两个一维的数组，计算的是这两个数组对应下标元素的乘积和(数学上称之为内积)
-        humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
-        humidity_point = series.dot(data_array[8:16])
-        temperature = series.dot(data_array[16:24])
-        temperature_point = series.dot(data_array[24:32])
-        check = series.dot(data_array[32:40])
-        tmp = humidity + humidity_point + temperature + temperature_point
-        print('return to the result')
+        # humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
+        # humidity_point = series.dot(data_array[8:16])
+        # temperature = series.dot(data_array[16:24])
+        # temperature_point = series.dot(data_array[24:32])
+        # check = series.dot(data_array[32:40])
+        # tmp = humidity + humidity_point + temperature + temperature_point
+        # print('return to the result')
         # 十进制的数据相加
-        if check == tmp:  # 数据校验，相等则输出
-            return humidity, temperature
-        else:  # 错误输出错误信息
-            return False
+        # if check == tmp:  # 数据校验，相等则输出
+        #     return humidity, temperature
+        # else:  # 错误输出错误信息
+        #    return False
 
     def detection(self):
-        humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
-        return humidity, temperature
+        return
+        # humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        # return humidity, temperature
 
 
 # 数码管
