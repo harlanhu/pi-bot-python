@@ -1,9 +1,10 @@
+import array
 import datetime
 import time
-import numpy as np
+# import numpy as np
 from lib.enums import DevicesIdEnums, Constants
 from core.gpio import GPIO
-import Adafruit_DHT
+# import Adafruit_DHT
 
 
 class Device:
@@ -142,26 +143,27 @@ class Thermometer(Device):
             count += 1
         print('completion of reception, processing data...')
         # logspace()函数用于创建一个于等比数列的数组
-        series = np.logspace(7, 0, 8, base=2, dtype=int)
+        # series = np.logspace(7, 0, 8, base=2, dtype=int)
         # 将data列表转换为数组
-        data_array = np.array(data)
+        # data_array = np.array(data)
         # dot()函数对于两个一维的数组，计算的是这两个数组对应下标元素的乘积和(数学上称之为内积)
-        humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
-        humidity_point = series.dot(data_array[8:16])
-        temperature = series.dot(data_array[16:24])
-        temperature_point = series.dot(data_array[24:32])
-        check = series.dot(data_array[32:40])
-        tmp = humidity + humidity_point + temperature + temperature_point
-        print('return to the result')
+        # humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
+        # humidity_point = series.dot(data_array[8:16])
+        # temperature = series.dot(data_array[16:24])
+        # temperature_point = series.dot(data_array[24:32])
+        # check = series.dot(data_array[32:40])
+        # tmp = humidity + humidity_point + temperature + temperature_point
+        # print('return to the result')
         # 十进制的数据相加
-        if check == tmp:  # 数据校验，相等则输出
-            return humidity, temperature
-        else:  # 错误输出错误信息
-            return False
+        # if check == tmp:  # 数据校验，相等则输出
+        #     return humidity, temperature
+        # else:  # 错误输出错误信息
+        #    return False
 
     def detection(self):
-        humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
-        return humidity, temperature
+        return
+        # humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        # return humidity, temperature
 
 
 # 数码管
@@ -268,7 +270,7 @@ class NixieTube(Device):
         time.sleep(self.refresh_time)
 
     def display_content(self, content, interval=0):
-        content_len = len(str(content))
+        content_len = len(str(content).replace('.', ''))
         if interval == 0 and content_len > 4:
             interval = 0.7
         else:
@@ -280,21 +282,71 @@ class NixieTube(Device):
 
     def display_str(self, val, interval=5.0):
         val = str(val)
+        no_dot_val = val.replace('.', '')
+        fill_count = 4 - len(no_dot_val)
+        val = val + '*' * fill_count
+        val_mapping = [[], [], [], []]
+        i = 0
+        dot_count = 0
+        while i < len(val):
+            if dot_count >= 4:
+                break
+            if i < len(val) - 1 and val[i + 1] == '.':
+                val_mapping[i - dot_count] = [val[i], True]
+                dot_count += 1
+                i += 2
+            else:
+                val_mapping[i - dot_count] = [val[i], False]
+                i += 1
+        print(val_mapping)
+        self.display_val(val_mapping, interval)
+
+    def display_val(self, val_mapping: list, interval=5.0):
         start_time = time.time()
         while time.time() - start_time <= interval:
             for i in range(4):
-                self.display_character(i, val[i])
-                time.sleep(self.refresh_time)
+                self.display_refresh(i, val_mapping[0], val_mapping[1])
         GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
 
     def display_long_str(self, val, interval=0.7):
         vals = '*' * 4 + str(val)
-        fill_num = len(vals) % 4
+        fill_num = len(vals.replace('.', '')) % 4
         vals = vals + '*' * (fill_num + 4)
-        for i in range(0, len(vals) - 4):
-            once_val = vals[i] + vals[i + 1] + vals[i + 2] + vals[i + 3]
-            self.display_str(once_val, interval)
+        i = 0
+        while i < len(vals) - 4:
+            val_mapping = [[], [], [], []]
+            end_val_dot = False
+            offset = 5
+            if i % 4 != 0 or i != 0:
+                offset = 4
+            if (i + offset) < len(vals) and vals[i + offset] == '.':
+                end_val_dot = True
+            temp_val = vals[i: i + 4]
+            dot_num = temp_val.count('.')
+            temp_val = vals[i: i + 4 + dot_num]
+            if temp_val[len(temp_val) - 1] == '.':
+                temp_val = vals[i: i + 5 + dot_num]
+            j = 0
+            dot_count = 0
+            while j < len(temp_val):
+                if dot_count >= 4:
+                    break
+                if j < len(temp_val) - 1 and temp_val[j + 1] == '.':
+                    val_mapping[j - dot_count] = [temp_val[j], True]
+                    j += 2
+                    dot_count += 1
+                else:
+                    val_mapping[j - dot_count] = [temp_val[j], False]
+                    j += 1
+            if end_val_dot:
+                val_mapping[3][1] = True
+            if val_mapping[0][1]:
+                i += 2
+            else:
+                i += 1
+            print(val_mapping)
+            self.display_val(val_mapping, interval)
         GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
 
