@@ -8,6 +8,7 @@ if __name__ == '__main__':
         pi_bot = FunctionManager()
         pi_bot.smoke_detection()
         pi_bot.display_roll()
+        pi_bot.body_detection()
     except KeyboardInterrupt:
         if pi_bot is not None:
             pi_bot.off()

@@ -29,12 +29,13 @@ class GpioBmcEnums(IntEnum):
     GPIO_35 = 19
     GPIO_36 = 16
     GPIO_37 = 26
-    GPIO_38 = 29
+    GPIO_38 = 20
     GPIO_40 = 21
 
 
 @unique
 class DevicesIdEnums(Enum):
+
     DEFAULT_BUZZER = 'default-buzzer'
 
     DEFAULT_SMOG = 'default-smog'
@@ -43,6 +44,8 @@ class DevicesIdEnums(Enum):
 
     DEFAULT_NIXIE_TUBE = 'default-nixie-tube'
 
+    DEFAULT_BODY_INFRARED_SENSOR = 'default-body-infrared-sensor'
+
 
 @unique
 class FunctionIdEnums(Enum):
@@ -50,6 +53,8 @@ class FunctionIdEnums(Enum):
     SMOKE_DETECTION = 'smoke-detection'
 
     Nixie_DISPLAY = 'nixie-display'
+
+    BODY_DETECTION = 'body-detection'
 
 
 class Constants(Enum):

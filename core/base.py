@@ -1,6 +1,6 @@
-from core.devices import Buzzer, Smog, Thermometer, Constants, DeviceManager, NixieTube
+from core.devices import Buzzer, Smog, Thermometer, Constants, DeviceManager, NixieTube, BodyInfraredSensor
 from lib.enums import DevicesIdEnums, GpioBmcEnums, FunctionIdEnums
-from lib.function import Function, SmokeDetectionFunction, NixieDisplayFunction
+from lib.function import Function, SmokeDetectionFunction, NixieDisplayFunction, BodyDetectionFunction
 from core.gpio import GPIO
 
 
@@ -16,12 +16,15 @@ class FunctionManager:
                                     GpioBmcEnums.GPIO_29, GpioBmcEnums.GPIO_31, GpioBmcEnums.GPIO_32,
                                     GpioBmcEnums.GPIO_33, GpioBmcEnums.GPIO_35, GpioBmcEnums.GPIO_36,
                                     GpioBmcEnums.GPIO_37)
+        self.body_infrared_sensor = BodyInfraredSensor(DevicesIdEnums.DEFAULT_BODY_INFRARED_SENSOR,
+                                                       GpioBmcEnums.GPIO_38)
         self.function_threads_dict = {}
         devices_dict = {
             self.buzzer.device_id: self.buzzer,
             self.smog.device_id: self.smog,
             self.thermometer.device_id: self.thermometer,
-            self.nixie_tube.device_id: self.nixie_tube
+            self.nixie_tube.device_id: self.nixie_tube,
+            self.body_infrared_sensor.device_id: self.body_infrared_sensor
         }
         self.device_manager = DeviceManager(devices_dict)
 
@@ -39,6 +42,14 @@ class FunctionManager:
             time_display.thread_id: time_display
         })
         time_display.start()
+
+    def body_detection(self):
+        body_detection_function = BodyDetectionFunction(FunctionIdEnums.BODY_DETECTION, self.body_infrared_sensor,
+                                                        self.buzzer)
+        self.function_threads_dict.update({
+            body_detection_function.thread_id: body_detection_function
+        })
+        body_detection_function.start()
 
     def stop_function(self, function_id):
         function = self.function_threads_dict.get(function_id)  # type:Function

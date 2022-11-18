@@ -1,6 +1,6 @@
 import threading
 import time
-from core.devices import NixieTube, Buzzer, Smog, Thermometer
+from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor
 
 
 class Function(threading.Thread):
@@ -50,7 +50,24 @@ class NixieDisplayFunction(Function):
                 self.nixie_tube.display_symbol_num(humidity, '%', 10)
             else:
                 print("Thermometer data are wrong,skip")
-            self.nixie_tube.display_content('Happy Birthday')
+            self.nixie_tube.display_content('Do not touch')
 
 
+class BodyDetectionFunction(Function):
 
+    def __init__(self, thread_id, body_infrared_sensor: BodyInfraredSensor, buzzer: Buzzer):
+        super().__init__(thread_id)
+        self.body_infrared_sensor = body_infrared_sensor
+        self.buzzer = buzzer
+        self.lock = threading.RLock()
+
+    def run(self):
+        count = 0
+        while True:
+            if self.body_infrared_sensor.detection():
+                print('========警告=======')
+                print('！！！！请勿触碰！！！！\n！！！！有电危险！！！！\n' * 3)
+                print('警告次数:', count)
+                self.buzzer.cycle(0.2, 3, 0.5, 10)
+                count += 1
+            time.sleep(1)

@@ -330,3 +330,14 @@ class NixieTube(Device):
             time.sleep(interval)
         GPIO.output(self.all_channels, GPIO.LOW)
         GPIO.output(self.sequence, GPIO.LOW)
+
+
+class BodyInfraredSensor(Device):
+
+    def __init__(self, device_id, channel):
+        super().__init__(device_id)
+        self.channel = channel
+        GPIO.setup(channel, GPIO.IN)
+
+    def detection(self):
+        return GPIO.input(self.channel)
