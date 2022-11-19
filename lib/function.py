@@ -46,8 +46,8 @@ class NixieDisplayFunction(Function):
             result = self.thermometer.detection()
             if result:
                 humidity, temperature = result
-                self.nixie_tube.display_symbol_num(temperature, '^', 10)
-                self.nixie_tube.display_symbol_num(humidity, '%', 10)
+                self.nixie_tube.display_content(str(temperature) + '^', 10)
+                self.nixie_tube.display_content(str(humidity) + '%', 10)
             else:
                 print("Thermometer data are wrong,skip")
             self.nixie_tube.display_content('Do not touch')
