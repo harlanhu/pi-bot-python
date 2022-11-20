@@ -397,8 +397,9 @@ class BodyInfraredSensor(Device):
 class OledDisplay(Device):
 
     def __init__(self, device_id, port=1, address=0x3c, width=128, height=32,
-                 font=ImageFont.truetype('./resource/msyhl.ttc', 12)):
+                 font=ImageFont.truetype('./resource/msyhl.ttc', 13)):
         super().__init__(device_id)
+        print(address)
         self.fount = font
         self.port = port
         self.address = address
