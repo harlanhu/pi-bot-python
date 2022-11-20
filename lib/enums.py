@@ -46,6 +46,8 @@ class DevicesIdEnums(Enum):
 
     DEFAULT_BODY_INFRARED_SENSOR = 'default-body-infrared-sensor'
 
+    DEFAULT_OLED_DISPLAY = 'default_oled_display'
+
 
 @unique
 class FunctionIdEnums(Enum):
@@ -55,6 +57,8 @@ class FunctionIdEnums(Enum):
     Nixie_DISPLAY = 'nixie-display'
 
     BODY_DETECTION = 'body-detection'
+
+    OLED_DISPLAY = 'oled_display'
 
 
 class Constants(Enum):

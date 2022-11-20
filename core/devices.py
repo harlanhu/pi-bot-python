@@ -1,9 +1,14 @@
 import datetime
 import time
 import numpy as np
+from PIL import ImageFont
+from luma.core.interface.serial import i2c
+from luma.core.render import canvas
+from luma.oled.device import ssd1306
 from lib.enums import DevicesIdEnums, Constants
 from core.gpio import GPIO
 import Adafruit_DHT
+import simpleaudio as audio
 
 
 class Device:
@@ -26,8 +31,6 @@ class DeviceManager:
     def setup(self):
         default_buzzer = self.devices_dict.get(DevicesIdEnums.DEFAULT_BUZZER)  # type:Buzzer
         default_buzzer.on()
-        default_nixie_tube = self.devices_dict.get(DevicesIdEnums.DEFAULT_NIXIE_TUBE)  # type:NixieTube
-        default_nixie_tube.on()
 
     def get_devices(self):
         return self.devices_dict
@@ -389,3 +392,34 @@ class BodyInfraredSensor(Device):
 
     def detection(self):
         return GPIO.input(self.channel)
+
+
+class OledDisplay(Device):
+
+    def __init__(self, device_id, port=1, address=0x3c, width=128, height=32,
+                 font=ImageFont.truetype('./resource/msyhl.ttc', 12)):
+        super().__init__(device_id)
+        self.fount = font
+        self.port = port
+        self.address = address
+        self.width = width
+        self.height = height
+        self.serial = i2c(port=port, address=address)
+        self.device = ssd1306(self.serial, width=width, height=height)
+
+    def display_info(self, t='无数据', temperature='无数据', humidity='无数据'):
+        with canvas(self.device) as draw:
+            draw.text((0, 0), ('当前时间:' + t), fill='white', font=self.fount)
+            draw.text((0, 13), (str(temperature) + '℃ ' + str(humidity) + '%rh'), fill='white',
+                      font=self.fount)
+
+
+class LoudSpeakerBox(Device):
+
+    def __init__(self, device_id):
+        super().__init__(device_id)
+
+    def playFile(self, filename):
+        wave_obj = audio.WaveObject.from_wave_file(filename)
+        play_obj = wave_obj.play()
+        play_obj.wait_done()

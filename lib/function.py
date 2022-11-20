@@ -1,6 +1,7 @@
+import datetime
 import threading
 import time
-from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor
+from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay
 
 
 class Function(threading.Thread):
@@ -71,3 +72,18 @@ class BodyDetectionFunction(Function):
                 self.buzzer.cycle(0.2, 3, 0.5, 10)
                 count += 1
             time.sleep(1)
+
+
+class OledDisplayFunction(Function):
+
+    def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer):
+        super().__init__(thread_id)
+        self.oled_display = oled_display
+        self.thermometer = thermometer
+
+    def run(self):
+        while True:
+            t = datetime.datetime.now().strftime('%H:%M:%S')
+            humidity, temperature = self.thermometer.detection()
+            self.oled_display.display_info(t, temperature, humidity)
+
