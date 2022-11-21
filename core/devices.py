@@ -1,4 +1,5 @@
 import datetime
+import threading
 import time
 import numpy as np
 from PIL import ImageFont
@@ -15,6 +16,7 @@ class Device:
 
     def __init__(self, device_id):
         self.device_id = device_id
+        self.lock = threading.RLock()
 
 
 class DeviceManager:
@@ -66,21 +68,29 @@ class Buzzer(Device):
         GPIO.setup(channel, GPIO.OUT, initial=GPIO.HIGH)
 
     def on(self, duration=0.2):
+        self.lock.acquire()
         GPIO.output(self.channel, GPIO.LOW)
         time.sleep(duration)
         GPIO.output(self.channel, GPIO.HIGH)
+        self.lock.release()
 
     def loop(self, duration=0.2, loop=1):
+        self.lock.acquire()
         for i in range(loop):
             self.on(duration)
+        self.lock.release()
 
     def cycle(self, duration=0.2, loop=3, interval=0.5, cycle=1):
+        self.lock.acquire()
         for i in range(cycle):
             self.loop(duration, loop)
             time.sleep(interval)
+        self.lock.release()
 
     def off(self):
+        self.lock.acquire()
         GPIO.setup(self.channel, GPIO.HIGH)
+        self.lock.release()
 
 
 class Smog(Device):
@@ -93,8 +103,10 @@ class Smog(Device):
             GPIO.setup(do_channel, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     def has_smoke(self):
+        self.lock.acquire()
         if self.mode == Constants.DO_TYPE:
             return not GPIO.input(self.do_channel)
+        self.lock.release()
 
 
 class Thermometer(Device):
@@ -102,7 +114,6 @@ class Thermometer(Device):
     def __init__(self, device_id, channel):
         super().__init__(device_id)
         self.channel = channel
-        self.hsa_setup = False
 
     def detection_test(self):
         print("========DHT11 Detection========")
@@ -163,7 +174,9 @@ class Thermometer(Device):
             return False
 
     def detection(self):
+        self.lock.acquire()
         humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        self.lock.release()
         return humidity, temperature
 
 
