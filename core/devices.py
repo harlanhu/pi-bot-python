@@ -1,6 +1,8 @@
 import datetime
 import threading
 import time
+from abc import abstractmethod, ABC
+
 import numpy as np
 from PIL import ImageFont
 from luma.core.interface.serial import i2c
@@ -18,6 +20,10 @@ class Device:
         self.device_id = device_id
         self.lock = threading.RLock()
 
+    @abstractmethod
+    def setup(self):
+        pass
+
 
 class DeviceManager:
     """
@@ -28,11 +34,6 @@ class DeviceManager:
         if devices_dict is None:
             devices_dict = dict()
         self.devices_dict = devices_dict
-        self.setup()
-
-    def setup(self):
-        default_buzzer = self.devices_dict.get(DevicesIdEnums.DEFAULT_BUZZER)  # type:Buzzer
-        default_buzzer.on()
 
     def get_devices(self):
         return self.devices_dict
@@ -56,7 +57,7 @@ class DeviceManager:
         return len(self.devices_dict)
 
 
-class Buzzer(Device):
+class Buzzer(Device, ABC):
     """
     蜂鸣器
     有源蜂鸣器: 高电平无声/低电平发声
@@ -67,7 +68,10 @@ class Buzzer(Device):
         self.channel = channel
         GPIO.setup(channel, GPIO.OUT, initial=GPIO.HIGH)
 
-    def on(self, duration=0.2):
+    def setup(self):
+        self.loop()
+
+    def play(self, duration=0.2):
         self.lock.acquire()
         GPIO.output(self.channel, GPIO.LOW)
         time.sleep(duration)
@@ -77,7 +81,7 @@ class Buzzer(Device):
     def loop(self, duration=0.2, loop=1):
         self.lock.acquire()
         for i in range(loop):
-            self.on(duration)
+            self.play(duration)
         self.lock.release()
 
     def cycle(self, duration=0.2, loop=3, interval=0.5, cycle=1):
@@ -93,7 +97,7 @@ class Buzzer(Device):
         self.lock.release()
 
 
-class Smog(Device):
+class Smog(Device, ABC):
 
     def __init__(self, device_id, do_channel, mode):
         super().__init__(device_id)
@@ -109,7 +113,7 @@ class Smog(Device):
         self.lock.release()
 
 
-class Thermometer(Device):
+class Thermometer(Device, ABC):
 
     def __init__(self, device_id, channel):
         super().__init__(device_id)
@@ -181,7 +185,7 @@ class Thermometer(Device):
 
 
 # 数码管
-class NixieTube(Device):
+class NixieTube(Device, ABC):
     """
     1，2，3，4 gpio控制第几个数字发光，dp控制点
     a-g 控制显示内容
@@ -254,7 +258,7 @@ class NixieTube(Device):
         GPIO.setup(self.all_channels, GPIO.OUT)
         GPIO.output(self.all_channels, GPIO.LOW)
 
-    def on(self):
+    def setup(self):
         stat_time = time.time()
         while time.time() - stat_time < 1:
             for seq in range(4):
@@ -396,7 +400,7 @@ class NixieTube(Device):
         GPIO.output(self.sequence, GPIO.LOW)
 
 
-class BodyInfraredSensor(Device):
+class BodyInfraredSensor(Device, ABC):
 
     def __init__(self, device_id, channel):
         super().__init__(device_id)
@@ -407,7 +411,7 @@ class BodyInfraredSensor(Device):
         return GPIO.input(self.channel)
 
 
-class OledDisplay(Device):
+class OledDisplay(Device, ABC):
 
     def __init__(self, device_id, port=1, address=0x3c, width=128, height=32,
                  font=ImageFont.truetype('./resource/msyhl.ttc', 13)):
@@ -428,12 +432,15 @@ class OledDisplay(Device):
                       font=self.fount)
 
 
-class LoudSpeakerBox(Device):
+class LoudSpeakerBox(Device, ABC):
 
     def __init__(self, device_id):
         super().__init__(device_id)
+        self.lock = threading.RLock()
 
     def playFile(self, filename):
+        self.lock.acquire()
         wave_obj = audio.WaveObject.from_wave_file(filename)
         play_obj = wave_obj.play()
         play_obj.wait_done()
+        self.lock.release()
