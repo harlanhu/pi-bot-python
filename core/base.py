@@ -50,7 +50,7 @@ class FunctionManager:
 
     def stop_function(self, function_id):
         function = self.function_threads_dict.get(function_id)  # type:Function
-        function.off()
+        function.stop()
 
     def off(self):
         for function in self.function_threads_dict.values():
