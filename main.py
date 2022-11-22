@@ -2,7 +2,7 @@ from core import gpio
 import pydevd_pycharm
 
 from core.base import Bot
-from core.devices import Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, DeviceManager
+from core.devices import Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, DeviceManager, PCF8591
 from core.function import FunctionManager
 from lib.enums import DevicesIdEnums, GpioBmcEnums, Constants
 
@@ -31,6 +31,11 @@ if __name__ == '__main__':
         device_manager = DeviceManager(init_devices())
         function_manager = FunctionManager()
         pi_bot = Bot(None, device_manager, function_manager)
+        adc = PCF8591("test", 0x48)
+        while True:
+            print('电位计   AIN0 = ', adc.read(0))
+            print('光敏电阻 AIN1 = ', adc.read(1))
+            print('热敏电阻 AIN2 = ', adc.read(2))
     except KeyboardInterrupt:
         if pi_bot is not None:
             pi_bot.destroy()

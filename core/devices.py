@@ -4,6 +4,7 @@ import time
 from abc import abstractmethod, ABC
 
 import numpy as np
+import smbus as smbus
 from PIL import ImageFont
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
@@ -396,3 +397,33 @@ class LoudSpeakerBox(Device, ABC):
         play_obj = wave_obj.play()
         play_obj.wait_done()
         self.lock.release()
+
+
+class PCF8591(Device, ABC):
+
+    def __init__(self, device_id, addr):
+        super().__init__(device_id)
+        self.addr = addr
+        self.smbus = smbus.SMBus(0)
+
+    def read(self, channel):
+        val = 0x40
+        if channel == 0:
+            val = 0x40
+        if channel == 1:
+            val = 0x41
+        if channel == 2:
+            val = 0x42
+        if channel == 3:
+            val = 0x43
+        self.smbus.write_byte(self.addr, val)
+        self.smbus.read_byte(self.addr)
+        return self.smbus.read_byte(self.addr)
+
+    def write(self, val):
+        # 将字符串值移动到temp
+        temp = val
+        # 将字符串改为整数类型
+        temp = int(temp)
+        # 写入字节数据，将数字值转化成模拟值从 AOUT 输出
+        self.smbus.write_byte_data(self.addr, 0x40, temp)
