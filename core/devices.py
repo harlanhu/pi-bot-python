@@ -7,6 +7,7 @@ import numpy as np
 from PIL import ImageFont
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
+from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
 from lib.enums import DevicesIdEnums, Constants
 from core.gpio import GPIO
@@ -77,7 +78,9 @@ class Buzzer(Device, ABC):
         self.lock.release()
 
     def off(self):
+        self.lock.acquire()
         GPIO.output(self.channel, GPIO.HIGH)
+        self.lock.release()
 
     def play(self, duration=0.2):
         self.lock.acquire()
@@ -127,7 +130,9 @@ class Thermometer(Device, ABC):
         self.detection()
 
     def detection(self):
+        self.lock.acquire()
         self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        self.lock.release()
         return self.humidity, self.temperature
 
 
@@ -360,15 +365,17 @@ class BodyInfraredSensor(Device, ABC):
 
 class OledDisplay(Device, ABC):
 
-    def __init__(self, device_id, port=1, address=0x3c, width=128, height=32,
+    def __init__(self, device_id, port=1, address=0x3c, width=128, height=32, fps=30,
                  font=ImageFont.truetype('./resource/msyhl.ttc', 13)):
         super().__init__(device_id)
+        # 1796236
         self.fount = font
         self.port = port
         self.address = address
         self.width = width
         self.height = height
         self.serial = i2c(port=port, address=address)
+        self.regulator = framerate_regulator(fps=fps)
         self.device = ssd1306(self.serial, width=width, height=height)
 
     def display_info(self, t='无数据', temperature='无数据', humidity='无数据'):
