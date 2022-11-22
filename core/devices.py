@@ -71,6 +71,14 @@ class Buzzer(Device, ABC):
     def setup(self):
         self.loop()
 
+    def on(self):
+        self.lock.acquire()
+        GPIO.output(self.channel, GPIO.LOW)
+        self.lock.release()
+
+    def off(self):
+        GPIO.output(self.channel, GPIO.HIGH)
+
     def play(self, duration=0.2):
         self.lock.acquire()
         GPIO.output(self.channel, GPIO.LOW)
@@ -89,11 +97,6 @@ class Buzzer(Device, ABC):
         for i in range(cycle):
             self.loop(duration, loop)
             time.sleep(interval)
-        self.lock.release()
-
-    def off(self):
-        self.lock.acquire()
-        GPIO.setup(self.channel, GPIO.HIGH)
         self.lock.release()
 
 
@@ -118,70 +121,14 @@ class Thermometer(Device, ABC):
     def __init__(self, device_id, channel):
         super().__init__(device_id)
         self.channel = channel
-
-    def detection_test(self):
-        print("========DHT11 Detection========")
-        GPIO.setup(self.channel, GPIO.OUT)
-        GPIO.output(self.channel, GPIO.LOW)
-        # 给信号提示传感器开始工作,并保持低电平18ms以上
-        time.sleep(0.02)
-        # 输出高电平
-        GPIO.output(self.channel, GPIO.HIGH)
-        # 发送完开始信号后把输出模式换成输入模式，不然信号线上电平始终被拉高
-        GPIO.setup(self.channel, GPIO.IN)
-        print("completion of signal transmission...")
-        # DHT11发出应答信号，输出 80 微秒的低电平
-        while GPIO.input(self.channel) == GPIO.LOW:
-            print('wait for DHT11 response...')
-            continue
-        # 紧接着输出 80 微秒的高电平通知外设准备接收数据
-        while GPIO.input(self.channel) == GPIO.HIGH:
-            print('wait for DHT11 transmit data...')
-            continue
-        print('raspberry pi receiving data...')
-        # 开始接收数据
-        count = 0  # 计数器
-        data = []  # 收到的二进制数据
-        while count < 40:
-            # 先是 50 微秒的低电平
-            while GPIO.input(self.channel) == GPIO.LOW:
-                continue
-            start_time = time.time()
-            # 接着是26-28微秒的高电平，或者 70 微秒的高电平
-            while GPIO.input(self.channel) != GPIO.HIGH:
-                continue
-            spend_time = time.time() - start_time
-            if 0.000025 < spend_time < 0.000029:
-                # 26-28 微秒时高电平
-                data.append(0)
-            else:
-                # 70 微秒时高电平
-                data.append(1)
-            count += 1
-        print('completion of reception, processing data...')
-        # logspace()函数用于创建一个于等比数列的数组
-        series = np.logspace(7, 0, 8, base=2, dtype=int)
-        # 将data列表转换为数组
-        data_array = np.array(data)
-        # dot()函数对于两个一维的数组，计算的是这两个数组对应下标元素的乘积和(数学上称之为内积)
-        humidity = series.dot(data_array[0:8])  # 用前8位二进制数据计算湿度的十进制值
-        humidity_point = series.dot(data_array[8:16])
-        temperature = series.dot(data_array[16:24])
-        temperature_point = series.dot(data_array[24:32])
-        check = series.dot(data_array[32:40])
-        tmp = humidity + humidity_point + temperature + temperature_point
-        print('return to the result')
-        # 十进制的数据相加
-        if check == tmp:  # 数据校验，相等则输出
-            return humidity, temperature
-        else:  # 错误输出错误信息
-            return False
+        self.humidity = 0
+        self.temperature = 0
+        time.sleep(1)
+        self.detection()
 
     def detection(self):
-        self.lock.acquire()
-        humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
-        self.lock.release()
-        return humidity, temperature
+        self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, self.channel)
+        return self.humidity, self.temperature
 
 
 # 数码管
@@ -416,7 +363,6 @@ class OledDisplay(Device, ABC):
     def __init__(self, device_id, port=1, address=0x3c, width=128, height=32,
                  font=ImageFont.truetype('./resource/msyhl.ttc', 13)):
         super().__init__(device_id)
-        print(address)
         self.fount = font
         self.port = port
         self.address = address
@@ -428,8 +374,7 @@ class OledDisplay(Device, ABC):
     def display_info(self, t='无数据', temperature='无数据', humidity='无数据'):
         with canvas(self.device) as draw:
             draw.text((0, 0), ('当前时间:' + t), fill='white', font=self.fount)
-            draw.text((0, 13), (str(temperature) + '℃ ' + str(humidity) + '%rh'), fill='white',
-                      font=self.fount)
+            draw.text((0, 13), (str(temperature) + '℃ ' + str(humidity) + '%rh'), fill='white', font=self.fount)
 
 
 class LoudSpeakerBox(Device, ABC):

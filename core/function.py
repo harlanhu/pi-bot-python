@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import threading
 import time
@@ -43,6 +44,13 @@ class FunctionManager:
         })
         body_detection_function.start()
 
+    def thermometer_detection(self):
+        thermometer_detection = ThermometerFunction(FunctionIdEnums.THERMOMETER_DETECTION, self.thermometer)
+        self.function_threads_dict.update({
+            thermometer_detection.thread_id: thermometer_detection
+        })
+        thermometer_detection.start()
+
     def oled_display_info(self):
         oled_display_function = OledDisplayFunction(FunctionIdEnums.OLED_DISPLAY, self.oled_display, self.thermometer)
         self.function_threads_dict.update({
@@ -83,7 +91,9 @@ class Function(threading.Thread):
         super().__init__()
         self.thread_id = thread_id
         self.status = threading.Event()
+        self.status.set()
         self.running = threading.Event()
+        self.running.set()
         self.lock = threading.RLock()
 
     def pause(self):
@@ -164,6 +174,17 @@ class BodyDetectionFunction(Function, ABC):
         time.sleep(1)
 
 
+class ThermometerFunction(Function, ABC):
+
+    def __init__(self, thread_id, thermometer: Thermometer):
+        super().__init__(thread_id)
+        self.thermometer = thermometer
+
+    def function(self):
+        self.thermometer.detection()
+        time.sleep(5)
+
+
 class OledDisplayFunction(Function, ABC):
 
     def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer):
@@ -172,7 +193,5 @@ class OledDisplayFunction(Function, ABC):
         self.thermometer = thermometer
 
     def function(self):
-        while True:
-            t = datetime.datetime.now().strftime('%H:%M:%S')
-            humidity, temperature = self.thermometer.detection()
-            self.oled_display.display_info(t, temperature, humidity)
+        t = datetime.datetime.now()
+        self.oled_display.display_info(t.strftime('%H:%M:%S'), self.thermometer.temperature, self.thermometer.humidity)

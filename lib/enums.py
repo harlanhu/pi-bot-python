@@ -35,7 +35,6 @@ class GpioBmcEnums(IntEnum):
 
 @unique
 class DevicesIdEnums(Enum):
-
     DEFAULT_BUZZER = 'default-buzzer'
 
     DEFAULT_SMOG = 'default-smog'
@@ -51,7 +50,6 @@ class DevicesIdEnums(Enum):
 
 @unique
 class FunctionIdEnums(Enum):
-
     SMOKE_DETECTION = 'smoke-detection'
 
     Nixie_DISPLAY = 'nixie-display'
@@ -59,6 +57,8 @@ class FunctionIdEnums(Enum):
     BODY_DETECTION = 'body-detection'
 
     OLED_DISPLAY = 'oled_display'
+
+    THERMOMETER_DETECTION = "thermometer_detection"
 
 
 class Constants(Enum):
