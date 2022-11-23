@@ -146,7 +146,6 @@ class OledDisplayFunction(Function, ABC):
         self.oled_display = oled_display
         self.thermometer = thermometer
         self.interval = interval
-        self.date_time = datetime.datetime.now()
 
     def run(self):
         content_index = 0
@@ -159,13 +158,14 @@ class OledDisplayFunction(Function, ABC):
                 content_index += 1
 
     def function(self, start_time, content_index):
-
+        tmp_time = datetime.datetime.now().time()
         while time.time() - start_time > self.interval:
             if content_index == 0:
-                t = datetime.datetime.now()
-                if self.date_time == t:
+                now = datetime.datetime.now()
+                if tmp_time == now.time():
                     continue
-                self.oled_display.display_time(t)
+                tmp_time = now.time()
+                self.oled_display.display_time(now)
             elif content_index == 1:
                 self.oled_display.display_temperature(self.thermometer.temperature, self.thermometer.humidity)
             else:
