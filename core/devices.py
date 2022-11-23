@@ -399,7 +399,7 @@ class OledDisplay(Device, ABC):
         img_path = str(Path(__file__).parent.resolve().parent.joinpath('resource', 'pi_logo.png'))
         print(img_path)
         logo = Image.open(img_path).convert('RGBA')
-        fff = Image.new(logo.mode, logo.size, (255,) * 4)
+        fff = Image.new('RGBA', logo.size, (255,) * 4)
         background = Image.new("RGBA", self.device.size, "white")
         posn = ((self.device.width - logo.width) // 2, 0)
         while True:
