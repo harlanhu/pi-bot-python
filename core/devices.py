@@ -2,8 +2,10 @@ import datetime
 import threading
 import time
 from abc import abstractmethod, ABC
+from pathlib import Path
+
 import smbus as smbus
-from PIL import ImageFont
+from PIL import ImageFont, Image
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
@@ -34,6 +36,8 @@ class DeviceManager:
         if devices_dict is None:
             devices_dict = dict()
         self.devices_dict = devices_dict
+        for device in devices_dict.values():
+            threading.Thread(device.setup()).start()
 
     def get_devices(self):
         return self.devices_dict
@@ -390,6 +394,20 @@ class OledDisplay(Device, ABC):
         self.serial = i2c(port=port, address=address)
         self.regulator = framerate_regulator(fps=fps)
         self.device = ssd1306(self.serial, width=width, height=height)
+
+    def setup(self):
+        img_path = str(Path(__file__).parent.resolve().parent.joinpath('resource', 'pi_logo.png'))
+        print(img_path)
+        logo = Image.open(img_path).convert('RGBA')
+        fff = Image.new(logo.mode, logo.size, (255,) * 4)
+        background = Image.new("RGBA", self.device.size, "white")
+        posn = ((self.device.width - logo.width) // 2, 0)
+        while True:
+            for angle in range(0, 360, 2):
+                rot = logo.rotate(angle, resample=Image.BILINEAR)
+                img = Image.composite(rot, fff, rot)
+                background.paste(img, posn)
+                self.device.display(background.convert(self.device.mode))
 
     def display_info(self, t='无数据', temperature='无数据', humidity='无数据'):
         with canvas(self.device) as draw:
