@@ -31,7 +31,7 @@ if __name__ == '__main__':
         device_manager = DeviceManager(init_devices())
         function_manager = FunctionManager()
         pi_bot = Bot(None, device_manager, function_manager)
-        adc = PCF8591("test", 0x48)
+        adc = PCF8591("test", 0, 0x48)
         while True:
             print('电位计   AIN0 = ', adc.read(0))
             print('光敏电阻 AIN1 = ', adc.read(1))

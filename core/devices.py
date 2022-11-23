@@ -2,15 +2,13 @@ import datetime
 import threading
 import time
 from abc import abstractmethod, ABC
-
-import numpy as np
 import smbus as smbus
 from PIL import ImageFont
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
-from lib.enums import DevicesIdEnums, Constants
+from lib.enums import Constants
 from core.gpio import GPIO
 import Adafruit_DHT
 import simpleaudio as audio
@@ -106,18 +104,32 @@ class Buzzer(Device, ABC):
 
 class Smog(Device, ABC):
 
-    def __init__(self, device_id, do_channel, mode):
+    def __init__(self, device_id, channel, mode, adc=None, threshold=0):
         super().__init__(device_id)
-        self.do_channel = do_channel
+        self.channel = channel
         self.mode = mode
+        self.adc = adc
+        self.threshold = threshold
         if mode == Constants.DO_TYPE:
-            GPIO.setup(do_channel, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     def has_smoke(self):
         self.lock.acquire()
         if self.mode == Constants.DO_TYPE:
-            return not GPIO.input(self.do_channel)
+            val = not GPIO.input(self.channel)
+        else:
+            val = self.adc.read(self.channel) >= self.threshold
         self.lock.release()
+        return val
+
+    def get_concentration(self):
+        self.lock.acquire()
+        if self.mode == Constants.DO_TYPE:
+            val = '当前DO模式无法读取数值'
+        else:
+            val = self.adc.read(self.channel)
+        self.lock.release()
+        return val
 
 
 class Thermometer(Device, ABC):
@@ -401,10 +413,10 @@ class LoudSpeakerBox(Device, ABC):
 
 class PCF8591(Device, ABC):
 
-    def __init__(self, device_id, addr):
+    def __init__(self, device_id, bus, addr):
         super().__init__(device_id)
         self.addr = addr
-        self.smbus = smbus.SMBus(0)
+        self.smbus = smbus.SMBus(bus)
 
     def read(self, channel):
         val = 0x40
