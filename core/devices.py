@@ -92,24 +92,18 @@ class Buzzer(Device, ABC):
         self.lock.release()
 
     def play(self, duration=0.2):
-        self.lock.acquire()
         GPIO.output(self.channel, GPIO.LOW)
         time.sleep(duration)
         GPIO.output(self.channel, GPIO.HIGH)
-        self.lock.release()
 
     def loop(self, duration=0.2, loop=1):
-        self.lock.acquire()
         for i in range(loop):
             self.play(duration)
-        self.lock.release()
 
     def cycle(self, duration=0.2, loop=3, interval=0.5, cycle=1):
-        self.lock.acquire()
         for i in range(cycle):
             self.loop(duration, loop)
             time.sleep(interval)
-        self.lock.release()
 
 
 class Smog(Device, ABC):
