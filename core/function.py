@@ -145,10 +145,10 @@ class OledDisplayFunction(Function, ABC):
         super().__init__(thread_id)
         self.oled_display = oled_display
         self.thermometer = thermometer
-        self.date_time = 'unknown'
+        self.date_time = datetime.datetime.now()
 
     def function(self):
         t = datetime.datetime.now()
         if self.date_time == t:
             return
-        self.oled_display.display_info(t.strftime('%H:%M:%S'), self.thermometer.temperature, self.thermometer.humidity)
+        self.oled_display.display_time(t)

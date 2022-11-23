@@ -10,6 +10,8 @@ from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
+
+from lib import utils
 from lib.enums import Constants
 from core.gpio import GPIO
 import Adafruit_DHT
@@ -409,10 +411,13 @@ class OledDisplay(Device, ABC):
                 background.paste(img, posn)
                 self.device.display(background.convert(self.device.mode))
 
-    def display_info(self, t='无数据', temperature='无数据', humidity='无数据'):
+    def display_time(self, t: datetime.datetime):
+        date = t.strftime('%Y年%m月%d日')
+        times = t.strftime('%H:%M:%S')
+        week = t.strftime('%w')
         with canvas(self.device) as draw:
-            draw.text((0, 0), ('当前时间:' + t), fill='white', font=self.fount)
-            draw.text((0, 13), (str(temperature) + '℃ ' + str(humidity) + '%rh'), fill='white', font=self.fount)
+            draw.text((2, 2), date + ' ' + utils.weeks[week], fill='white', font=self.fount)
+            draw.text((14, 2), times)
 
 
 class LoudSpeakerBox(Device, ABC):
