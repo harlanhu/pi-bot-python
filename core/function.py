@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import threading
 import time
@@ -84,7 +83,6 @@ class SmokeDetectionFunction(Function, ABC):
         super().__init__(thread_id)
         self.buzzer = buzzer
         self.smog = smog
-        self.lock = threading.RLock()
 
     def function(self):
         has_smoke = self.smog.has_smoke()
@@ -147,7 +145,10 @@ class OledDisplayFunction(Function, ABC):
         super().__init__(thread_id)
         self.oled_display = oled_display
         self.thermometer = thermometer
+        self.date_time = 'unknown'
 
     def function(self):
         t = datetime.datetime.now()
+        if self.date_time == t:
+            return
         self.oled_display.display_info(t.strftime('%H:%M:%S'), self.thermometer.temperature, self.thermometer.humidity)
