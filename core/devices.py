@@ -4,9 +4,12 @@ import time
 from abc import abstractmethod, ABC
 from pathlib import Path
 
+import feedparser
 import smbus as smbus
 from PIL import ImageFont, Image
 from luma.core.interface.serial import i2c
+from luma.core.legacy import show_message
+from luma.core.legacy.font import proportional, SINCLAIR_FONT
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
@@ -39,7 +42,8 @@ class DeviceManager:
             devices_dict = dict()
         self.devices_dict = devices_dict
         for device in devices_dict.values():
-            threading.Thread(device.setup()).start()
+            print('正在启动 ', device.device_id)
+            threading.Thread(target=device.setup()).start()
 
     def get_devices(self):
         return self.devices_dict
@@ -385,7 +389,7 @@ class BodyInfraredSensor(Device, ABC):
 class OledDisplay(Device, ABC):
 
     def __init__(self, device_id, port=1, address=0x3c, width=128, height=32, fps=30,
-                 font=ImageFont.truetype('./resource/msyhl.ttc', 13)):
+                 font=ImageFont.truetype('./resource/msyhl.ttc', 12)):
         super().__init__(device_id)
         # 1796236
         self.fount = font
@@ -399,12 +403,12 @@ class OledDisplay(Device, ABC):
 
     def setup(self):
         img_path = str(Path(__file__).parent.resolve().parent.joinpath('resource', 'pi_logo.png'))
-        print(img_path)
         logo = Image.open(img_path).convert('RGBA')
         fff = Image.new('RGBA', logo.size, (255,) * 4)
         background = Image.new("RGBA", self.device.size, "white")
         posn = ((self.device.width - logo.width) // 2, 0)
-        while True:
+        start_time = time.time()
+        while time.time() - start_time <= 5:
             for angle in range(0, 360, 2):
                 rot = logo.rotate(angle, resample=Image.BILINEAR)
                 img = Image.composite(rot, fff, rot)
@@ -416,16 +420,21 @@ class OledDisplay(Device, ABC):
         times = t.strftime('%H:%M:%S')
         week = t.strftime('%w')
         with canvas(self.device) as draw:
-            draw.text((2, 2), date + ' ' + utils.weeks[week], fill='white', font=self.fount)
-            draw.text((14, 2), times)
+            draw.text((2, 0), date + ' ' + utils.weeks[int(week)], fill='white', font=self.fount)
+            draw.text((40, 15), times, fill='white', font=self.fount)
 
     def display_weather(self):
-        pass
+        font = ImageFont.truetype('./resource/fontawesome-webfont.ttf', self.device.height - 10)
+        with canvas(self.device) as draw:
+            w, h = draw.textsize(text='\uf05a', font=font)
+            left = (self.device.width - w) / 2
+            top = (self.device.height - h) / 2
+            draw.text((left, top), text='\uf05a', font=font, fill="white")
 
     def display_temperature(self, temperature, humidity):
         with canvas(self.device) as draw:
-            draw.text((2, 2), ('室温: ' + str(temperature) + '℃'), fill='white', font=self.fount)
-            draw.text((14, 2), ('湿度: ' + str(humidity) + ' %RH'), fill='white', font=self.fount)
+            draw.text((2, 0), ('室内温度: ' + str(temperature) + ' ℃'), fill='white', font=self.fount)
+            draw.text((2, 15), ('室内湿度: ' + str(humidity) + ' %RH'), fill='white', font=self.fount)
 
 
 class LoudSpeakerBox(Device, ABC):
@@ -434,7 +443,7 @@ class LoudSpeakerBox(Device, ABC):
         super().__init__(device_id)
         self.lock = threading.RLock()
 
-    def playFile(self, filename):
+    def play_file(self, filename):
         self.lock.acquire()
         wave_obj = audio.WaveObject.from_wave_file(filename)
         play_obj = wave_obj.play()

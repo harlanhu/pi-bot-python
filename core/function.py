@@ -67,6 +67,7 @@ class Function(threading.Thread):
         self.running.clear()
         self.lock.release()
 
+    @abstractmethod
     def run(self):
         while self.running.isSet():
             self.status.wait()
@@ -141,7 +142,7 @@ class ThermometerFunction(Function, ABC):
 
 class OledDisplayFunction(Function, ABC):
 
-    def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer, interval=5):
+    def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer, interval=15):
         super().__init__(thread_id)
         self.oled_display = oled_display
         self.thermometer = thermometer
@@ -152,14 +153,14 @@ class OledDisplayFunction(Function, ABC):
         while self.running.isSet():
             self.status.wait()
             self.function(time.time(), content_index)
-            if content_index == 2:
+            if content_index >= 2:
                 content_index = 0
             else:
                 content_index += 1
 
     def function(self, start_time, content_index):
         tmp_time = datetime.datetime.now().time()
-        while time.time() - start_time > self.interval:
+        while time.time() - start_time <= self.interval:
             if content_index == 0:
                 now = datetime.datetime.now()
                 if tmp_time == now.time():
@@ -167,7 +168,6 @@ class OledDisplayFunction(Function, ABC):
                 tmp_time = now.time()
                 self.oled_display.display_time(now)
             elif content_index == 1:
-                self.oled_display.display_temperature(self.thermometer.temperature, self.thermometer.humidity)
-            else:
                 self.oled_display.display_weather()
-
+            else:
+                self.oled_display.display_temperature(self.thermometer.temperature, self.thermometer.humidity)
