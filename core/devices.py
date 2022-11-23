@@ -419,6 +419,14 @@ class OledDisplay(Device, ABC):
             draw.text((2, 2), date + ' ' + utils.weeks[week], fill='white', font=self.fount)
             draw.text((14, 2), times)
 
+    def display_weather(self):
+        pass
+
+    def display_temperature(self, temperature, humidity):
+        with canvas(self.device) as draw:
+            draw.text((2, 2), ('室温: ' + str(temperature) + '℃'), fill='white', font=self.fount)
+            draw.text((14, 2), ('湿度: ' + str(humidity) + ' %RH'), fill='white', font=self.fount)
+
 
 class LoudSpeakerBox(Device, ABC):
 

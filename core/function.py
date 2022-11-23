@@ -73,7 +73,7 @@ class Function(threading.Thread):
             self.function()
 
     @abstractmethod
-    def function(self):
+    def function(self, **kwargs):
         pass
 
 
@@ -141,14 +141,33 @@ class ThermometerFunction(Function, ABC):
 
 class OledDisplayFunction(Function, ABC):
 
-    def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer):
+    def __init__(self, thread_id, oled_display: OledDisplay, thermometer: Thermometer, interval=5):
         super().__init__(thread_id)
         self.oled_display = oled_display
         self.thermometer = thermometer
+        self.interval = interval
         self.date_time = datetime.datetime.now()
 
-    def function(self):
-        t = datetime.datetime.now()
-        if self.date_time == t:
-            return
-        self.oled_display.display_time(t)
+    def run(self):
+        content_index = 0
+        while self.running.isSet():
+            self.status.wait()
+            self.function(time.time(), content_index)
+            if content_index == 2:
+                content_index = 0
+            else:
+                content_index += 1
+
+    def function(self, start_time, content_index):
+
+        while time.time() - start_time > self.interval:
+            if content_index == 0:
+                t = datetime.datetime.now()
+                if self.date_time == t:
+                    continue
+                self.oled_display.display_time(t)
+            elif content_index == 1:
+                self.oled_display.display_temperature(self.thermometer.temperature, self.thermometer.humidity)
+            else:
+                self.oled_display.display_weather()
+
