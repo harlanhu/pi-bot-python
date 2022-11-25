@@ -3,22 +3,17 @@ import threading
 import time
 from abc import abstractmethod, ABC
 from pathlib import Path
-
-import feedparser
 import smbus as smbus
 from PIL import ImageFont, Image
 from luma.core.interface.serial import i2c
-from luma.core.legacy import show_message
-from luma.core.legacy.font import proportional, SINCLAIR_FONT
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
-
-from lib import utils
-from lib.enums import Constants
+from lib.enums import Constants, DevicesIdEnums
 from core.gpio import GPIO
 import Adafruit_DHT
 import simpleaudio as audio
+from lib.utils import TimeUtils
 
 
 class Device:
@@ -42,7 +37,8 @@ class DeviceManager:
             devices_dict = dict()
         self.devices_dict = devices_dict
         for device in devices_dict.values():
-            print('正在启动 ', device.device_id)
+            device_enum = device.device_id # type: DevicesIdEnums
+            print('正在启动 ',  device_enum.value)
             threading.Thread(target=device.setup()).start()
 
     def get_devices(self):
@@ -414,7 +410,7 @@ class OledDisplay(Device, ABC):
         times = t.strftime('%H:%M:%S')
         week = t.strftime('%w')
         with canvas(self.device) as draw:
-            draw.text((2, 0), date + ' ' + utils.weeks[int(week)], fill='white', font=self.fount)
+            draw.text((2, 0), date + ' ' + TimeUtils.weeks[int(week)], fill='white', font=self.fount)
             draw.text((40, 15), times, fill='white', font=self.fount)
 
     def display_weather(self):

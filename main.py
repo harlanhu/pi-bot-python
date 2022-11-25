@@ -35,11 +35,6 @@ if __name__ == '__main__':
         print('正在初始化机器人...')
         pi_bot = Bot(None, device_manager, function_manager)
         print('机器人已就绪...')
-        #adc = PCF8591("test", 0, 0x48)
-        #while True:
-            #print('电位计   AIN0 = ', adc.read(0))
-            #print('光敏电阻 AIN1 = ', adc.read(1))
-            #print('热敏电阻 AIN2 = ', adc.read(2))
     except KeyboardInterrupt:
         if pi_bot is not None:
             pi_bot.destroy()
