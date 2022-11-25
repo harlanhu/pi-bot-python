@@ -37,7 +37,7 @@ class DeviceManager:
             devices_dict = dict()
         self.devices_dict = devices_dict
         for device in devices_dict.values():
-            device_enum = device.device_id # type: DevicesIdEnums
+            device_enum = device.device_id  # type: DevicesIdEnums
             print('正在启动 ',  device_enum.value)
             threading.Thread(target=device.setup()).start()
 
