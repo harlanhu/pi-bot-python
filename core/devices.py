@@ -461,7 +461,6 @@ class PCF8591(Device, ABC):
         if channel == 3:
             val = 0x43
         self.smbus.write_byte(self.addr, val)
-        self.smbus.read_byte(self.addr)
         return self.smbus.read_byte(self.addr)
 
     def write(self, val):
