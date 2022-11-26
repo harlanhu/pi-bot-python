@@ -9,6 +9,8 @@ from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
+import picamera
+
 from lib.enums import Constants, DevicesIdEnums
 from core.gpio import GPIO
 import Adafruit_DHT
@@ -469,3 +471,34 @@ class PCF8591(Device, ABC):
         temp = int(temp)
         # 写入字节数据，将数字值转化成模拟值从 AOUT 输出
         self.smbus.write_byte_data(self.addr, 0x40, temp)
+
+
+class Camera(Device, ABC):
+
+    # 高电平为常规模式，低电平为红外模式
+    def __init__(self, device_id, channel, width=1920, height=1080, framerate=60, file_path='./file/camera'):
+        super().__init__(device_id)
+        self.channel = channel
+        self.camera = picamera.PiCamera(resolution=(width, height), framerate=framerate)
+        self.file_path = file_path
+        GPIO.setup(channel, GPIO.OUT)
+        GPIO.output(channel, GPIO.HIGH)
+
+    def turn_on_infrared(self):
+        GPIO.output(self.channel, GPIO.LOW)
+
+    def turn_off_infrared(self):
+        GPIO.output(self.channel, GPIO.HIGH)
+
+    def start_preview(self):
+        self.camera.start_preview()
+
+    def stop_preview(self):
+        self.camera.stop_preview()
+
+    def capture(self):
+        now = datetime.datetime.now()
+        self.start_preview()
+        time.sleep(2)
+        self.camera.capture(self.file_path + '/' + now.strftime('%Y%m%d%H%M%S') + '.jpg')
+        self.stop_preview()
