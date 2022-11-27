@@ -495,9 +495,14 @@ class Camera(Device, ABC):
     def stop_preview(self):
         self.camera.stop_preview()
 
-    def capture(self):
+    def capture(self, path):
+        self.camera.capture(path)
+
+    def take_photos(self):
         now = datetime.datetime.now()
+        path = self.file_path + '/' + now.strftime('%Y%m%d%H%M%S') + '.jpg'
         self.start_preview()
         time.sleep(2)
-        self.camera.capture(self.file_path + '/' + now.strftime('%Y%m%d%H%M%S') + '.jpg')
+        self.camera.capture(path)
         self.stop_preview()
+
