@@ -2,7 +2,10 @@ import datetime
 import threading
 import time
 from abc import abstractmethod, ABC
-from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay
+
+from RPi import GPIO
+
+from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, Camera
 
 
 class FunctionManager:
@@ -171,3 +174,21 @@ class OledDisplayFunction(Function, ABC):
                 self.oled_display.display_weather()
             else:
                 self.oled_display.display_temperature(self.thermometer.temperature, self.thermometer.humidity)
+
+
+class LightingDetectionFunction(Function, ABC):
+
+    def __init__(self, thread_id, pcf8591, channel, camera: Camera):
+        super().__init__(thread_id)
+        self.pcf8591 = pcf8591
+        self.channel = channel
+        self.camera = camera
+        self.luminance = self.pcf8591.read(channel)
+
+    def function(self, **kwargs):
+        self.luminance = self.pcf8591.read(self.channel)
+        if self.luminance > 130:
+            self.camera.turn_on_infrared()
+        else:
+            self.camera.turn_off_infrared()
+        time.sleep(0.5)
