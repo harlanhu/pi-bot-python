@@ -20,7 +20,21 @@ class WeatherUtils:
 
     default_params = {'key': application_key}
 
-    current_weather = None
+    has_data = False
+
+    province = ''
+
+    city = ''
+
+    weather = ''
+
+    temperature = ''
+
+    wind_direction = ''
+
+    wind_power = ''
+
+    humidity = ''
 
     @classmethod
     def get_weather(cls, location_code):
@@ -31,9 +45,20 @@ class WeatherUtils:
             result.encoding = 'utf-8'
             json_data = result.json()
             status = json_data.get('status')
-            if status == 1:
-                return json_data.get('lives')
+            if status == '1':
+                weather_data = json_data.get('lives')[0]
+                cls.province = weather_data.get('province')
+                cls.city = weather_data.get('city')
+                cls.weather = weather_data.get('weather')
+                cls.temperature = weather_data.get('temperature')
+                cls.wind_direction = weather_data.get('winddirection')
+                cls.wind_power = weather_data.get('windpower')
+                cls.humidity = weather_data.get('humidity')
+                cls.has_data = True
+                return weather_data
             else:
+                cls.has_data = False
                 print('获取天气信息失败 Code: ', json_data.get('infocode'), ' Info: ', json_data.get('info'))
         else:
+            cls.has_data = False
             return False

@@ -9,13 +9,12 @@ from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
-import picamera
 
 from lib.enums import Constants, DevicesId
 from core.gpio import GPIO
 import Adafruit_DHT
 import simpleaudio as audio
-from lib.utils import TimeUtils
+from lib.utils import TimeUtils, WeatherUtils
 
 
 class Device:
@@ -418,10 +417,20 @@ class OledDisplay(Device, ABC):
     def display_weather(self):
         font = ImageFont.truetype('./resource/fontawesome-webfont.ttf', self.device.height - 10)
         with canvas(self.device) as draw:
-            w, h = draw.textsize(text='\uf05a', font=font)
-            left = (self.device.width - w) / 2
-            top = (self.device.height - h) / 2
-            draw.text((left, top), text='\uf05a', font=font, fill="white")
+            if WeatherUtils.has_data:
+                draw.text((2, 0), WeatherUtils.province + ',' + WeatherUtils.city + ':'
+                          + WeatherUtils.temperature + '℃,'
+                          + WeatherUtils.weather,
+                          fill='white', font=self.fount)
+                draw.text((2, 15), '湿度:' + WeatherUtils.humidity + '%,'
+                          + WeatherUtils.wind_direction + '风,'
+                          + WeatherUtils.wind_power + '级',
+                          fill='white', font=self.fount)
+            else:
+                w, h = draw.textsize(text='\uf05a', font=font)
+                left = (self.device.width - w) / 2
+                top = (self.device.height - h) / 2
+                draw.text((left, top), text='\uf05a', font=font, fill="white")
 
     def display_temperature(self, temperature, humidity):
         with canvas(self.device) as draw:
@@ -475,10 +484,10 @@ class PCF8591(Device, ABC):
 class Camera(Device, ABC):
 
     # 高电平为常规模式，低电平为红外模式
-    def __init__(self, device_id, channel, width=1920, height=1080, framerate=30, file_path='./file/camera'):
+    def __init__(self, device_id, channel, width=900, height=900, framerate=24, file_path='./file/camera'):
         super().__init__(device_id)
         self.channel = channel
-        self.camera = picamera.PiCamera(resolution=(width, height), framerate=framerate)
+        self.camera = None # picamera.PiCamera(resolution=(width, height), framerate=framerate)
         self.file_path = file_path
         GPIO.setup(channel, GPIO.OUT)
         GPIO.output(channel, GPIO.HIGH)

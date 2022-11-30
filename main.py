@@ -1,5 +1,5 @@
 from core import gpio
-import pydevd_pycharm
+# import pydevd_pycharm
 
 from core.base import Bot
 from core.devices import Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, DeviceManager, PCF8591, Camera
