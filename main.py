@@ -1,13 +1,9 @@
 from core import gpio
-# import pydevd_pycharm
-
 from core.base import Bot
 from core.devices import Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, DeviceManager, PCF8591, Camera
 from core.function import FunctionManager
 from lib.enums import DevicesId, GpioBmcEnums, Constants
 
-
-# pydevd_pycharm.settrace('192.168.31.229', port=19800, stdoutToServer=True, stderrToServer=True)
 
 def init_devices():
     buzzer = Buzzer(DevicesId.DEFAULT_BUZZER, GpioBmcEnums.GPIO_7)
@@ -15,8 +11,8 @@ def init_devices():
     thermometer = Thermometer(DevicesId.DEFAULT_THERMOMETER, GpioBmcEnums.GPIO_12)
     body_infrared_sensor = BodyInfraredSensor(DevicesId.DEFAULT_BODY_INFRARED_SENSOR, GpioBmcEnums.GPIO_13)
     oled_display = OledDisplay(DevicesId.DEFAULT_OLED_DISPLAY)
-    pcf8591 = PCF8591(DevicesId.DEFAULT_PCF8591, 0, 0x48)
-    camera = Camera(DevicesId.DEFAULT_CAMERA, GpioBmcEnums.GPIO_15, 900, 900, 30)
+    pcf8591 = PCF8591(DevicesId.DEFAULT_PCF8591, 1, 0x48)
+    camera = Camera(DevicesId.DEFAULT_CAMERA, GpioBmcEnums.GPIO_15, 400, 400, 30)
     return {
         buzzer.device_id: buzzer,
         smog.device_id: smog,

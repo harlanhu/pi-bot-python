@@ -68,6 +68,8 @@ class FunctionId(Enum):
 
     LIGHTING_DETECTION = 'lighting_detection'
 
+    VIDEO_OUTPUT = 'video_output'
+
 
 class Constants(Enum):
 

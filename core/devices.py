@@ -1,19 +1,19 @@
 import datetime
 import threading
 import time
+import smbus as smbus
+import cv2 as cv
+import Adafruit_DHT
+import simpleaudio as audio
 from abc import abstractmethod, ABC
 from pathlib import Path
-import smbus as smbus
 from PIL import ImageFont, Image
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.core.sprite_system import framerate_regulator
 from luma.oled.device import ssd1306
-
 from lib.enums import Constants, DevicesId
 from core.gpio import GPIO
-import Adafruit_DHT
-import simpleaudio as audio
 from lib.utils import TimeUtils, WeatherUtils
 
 
@@ -39,7 +39,7 @@ class DeviceManager:
         self.devices_dict = devices_dict
         for device in devices_dict.values():
             device_enum = device.device_id  # type: DevicesId
-            print('正在启动 ',  device_enum.value)
+            print('正在启动 ', device_enum.value)
             threading.Thread(target=device.setup()).start()
 
     def get_devices(self):
@@ -454,7 +454,7 @@ class LoudSpeakerBox(Device, ABC):
 
 class PCF8591(Device, ABC):
 
-    def __init__(self, device_id, bus, addr):
+    def __init__(self, device_id, bus=1, addr=0x48):
         super().__init__(device_id)
         self.addr = addr
         self.smbus = smbus.SMBus(bus)
@@ -487,7 +487,10 @@ class Camera(Device, ABC):
     def __init__(self, device_id, channel, width=900, height=900, framerate=24, file_path='./file/camera'):
         super().__init__(device_id)
         self.channel = channel
-        self.camera = None # picamera.PiCamera(resolution=(width, height), framerate=framerate)
+        self.cap = cv.VideoCapture(0)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+        self.cap.set(cv.CAP_PROP_FPS, framerate)
         self.file_path = file_path
         GPIO.setup(channel, GPIO.OUT)
         GPIO.output(channel, GPIO.HIGH)
@@ -498,20 +501,10 @@ class Camera(Device, ABC):
     def turn_off_infrared(self):
         GPIO.output(self.channel, GPIO.HIGH)
 
-    def start_preview(self):
-        self.camera.start_preview()
+    def show(self):
+        ret, curr_frame = self.cap.read()
+        frame = cv.flip(curr_frame, 1)
+        cv.imshow("curr_frame", frame)
 
-    def stop_preview(self):
-        self.camera.stop_preview()
-
-    def capture(self, path):
-        self.camera.capture(path)
-
-    def take_photos(self):
-        now = datetime.datetime.now()
-        path = self.file_path + '/' + now.strftime('%Y%m%d%H%M%S') + '.jpg'
-        self.start_preview()
-        time.sleep(2)
-        self.camera.capture(path)
-        self.stop_preview()
-
+    def off(self):
+        self.cap.release()

@@ -192,3 +192,13 @@ class LightingDetectionFunction(Function, ABC):
         else:
             self.camera.turn_off_infrared()
         time.sleep(0.5)
+
+
+class VideoOutputFunction(Function, ABC):
+
+    def __init__(self, thread_id, camera: Camera):
+        super().__init__(thread_id)
+        self.camera = camera
+
+    def function(self, **kwargs):
+        self.camera.show()

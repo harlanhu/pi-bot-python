@@ -1,7 +1,7 @@
 from core import schedule_task
 from core.devices import DeviceManager
 from core.function import FunctionManager, SmokeDetectionFunction, BodyDetectionFunction, ThermometerFunction, \
-    OledDisplayFunction, LightingDetectionFunction
+    OledDisplayFunction, LightingDetectionFunction, VideoOutputFunction
 from core.gpio import GPIO
 from lib.enums import DevicesId, FunctionId
 
@@ -20,6 +20,7 @@ class Bot:
         self.thermometer_detection()
         self.oled_display_info()
         self.lighting_detection()
+        self.video_output()
 
     def destroy(self):
         self.function_manager.stop_all()
@@ -55,6 +56,11 @@ class Bot:
                                                                 0,
                                                                 self.device_manager.get_device(DevicesId.DEFAULT_CAMERA))
         self.function_manager.register(lighting_detection_function.thread_id, lighting_detection_function)
+
+    def video_output(self):
+        video_output_function = VideoOutputFunction(FunctionId.VIDEO_OUTPUT,
+                                                    self.device_manager.get_device(DevicesId.DEFAULT_CAMERA))
+        self.function_manager.register(video_output_function.thread_id, video_output_function)
 
 
 
