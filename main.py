@@ -12,7 +12,7 @@ def init_devices():
     body_infrared_sensor = BodyInfraredSensor(DevicesId.DEFAULT_BODY_INFRARED_SENSOR, GpioBmcEnums.GPIO_13)
     oled_display = OledDisplay(DevicesId.DEFAULT_OLED_DISPLAY)
     pcf8591 = PCF8591(DevicesId.DEFAULT_PCF8591, 1, 0x48)
-    camera = Camera(DevicesId.DEFAULT_CAMERA, GpioBmcEnums.GPIO_15, 400, 400, 30)
+    camera = Camera(DevicesId.DEFAULT_CAMERA, GpioBmcEnums.GPIO_15)
     return {
         buzzer.device_id: buzzer,
         smog.device_id: smog,

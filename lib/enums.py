@@ -62,13 +62,13 @@ class FunctionId(Enum):
 
     BODY_DETECTION = 'body-detection'
 
-    OLED_DISPLAY = 'oled_display'
+    OLED_DISPLAY = 'oled-display'
 
-    THERMOMETER_DETECTION = 'thermometer_detection'
+    THERMOMETER_DETECTION = 'thermometer-detection'
 
-    LIGHTING_DETECTION = 'lighting_detection'
+    LIGHTING_DETECTION = 'lighting-detection'
 
-    VIDEO_OUTPUT = 'video_output'
+    VIDEO_OUTPUT = 'video-output'
 
 
 class Constants(Enum):

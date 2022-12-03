@@ -2,9 +2,6 @@ import datetime
 import threading
 import time
 from abc import abstractmethod, ABC
-
-from RPi import GPIO
-
 from core.devices import NixieTube, Buzzer, Smog, Thermometer, BodyInfraredSensor, OledDisplay, Camera
 
 
@@ -72,7 +69,7 @@ class Function(threading.Thread):
 
     @abstractmethod
     def run(self):
-        while self.running.isSet():
+        while self.running.is_set():
             self.status.wait()
             self.function()
 

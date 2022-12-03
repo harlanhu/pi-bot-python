@@ -484,27 +484,33 @@ class PCF8591(Device, ABC):
 class Camera(Device, ABC):
 
     # 高电平为常规模式，低电平为红外模式
-    def __init__(self, device_id, channel, width=900, height=900, framerate=24, file_path='./file/camera'):
+    def __init__(self, device_id, channel, width=400, height=400, framerate=30, file_path='./file/camera'):
         super().__init__(device_id)
         self.channel = channel
         self.cap = cv.VideoCapture(0)
-        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
         self.cap.set(cv.CAP_PROP_FPS, framerate)
         self.file_path = file_path
+        self.mode = 0
         GPIO.setup(channel, GPIO.OUT)
         GPIO.output(channel, GPIO.HIGH)
 
     def turn_on_infrared(self):
-        GPIO.output(self.channel, GPIO.LOW)
+        if self.mode == 1:
+            self.mode = 0
+            GPIO.output(self.channel, GPIO.LOW)
 
     def turn_off_infrared(self):
-        GPIO.output(self.channel, GPIO.HIGH)
+        if self.mode == 0:
+            self.mode = 1
+            GPIO.output(self.channel, GPIO.HIGH)
 
     def show(self):
-        ret, curr_frame = self.cap.read()
-        frame = cv.flip(curr_frame, 1)
-        cv.imshow("curr_frame", frame)
+        ret, frame = self.cap.read()
+        frame = cv.flip(frame, 1)
+        cv.imshow("frame", frame)
+        time.sleep(0.1)
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            self.off()
 
     def off(self):
         self.cap.release()
