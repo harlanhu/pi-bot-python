@@ -484,11 +484,13 @@ class PCF8591(Device, ABC):
 class Camera(Device, ABC):
 
     # 高电平为常规模式，低电平为红外模式
-    def __init__(self, device_id, channel, width=400, height=400, framerate=30, file_path='./file/camera'):
+    def __init__(self, device_id, channel, width=640, height=480, framerate=60, file_path='./file/camera'):
         super().__init__(device_id)
         self.channel = channel
         self.cap = cv.VideoCapture(0)
         self.cap.set(cv.CAP_PROP_FPS, framerate)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
         self.file_path = file_path
         self.mode = 0
         GPIO.setup(channel, GPIO.OUT)
@@ -508,9 +510,9 @@ class Camera(Device, ABC):
         ret, frame = self.cap.read()
         frame = cv.flip(frame, 1)
         cv.imshow("frame", frame)
-        time.sleep(0.1)
-        if cv.waitKey(1) & 0xFF == ord('q'):
+        if cv.waitKey(1) == ord('q'):
             self.off()
+        return frame
 
     def off(self):
         self.cap.release()
