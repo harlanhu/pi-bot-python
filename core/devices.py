@@ -491,24 +491,32 @@ class Camera(Device, ABC):
         self.cap.set(cv.CAP_PROP_FPS, framerate)
         self.cap.set(cv.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+        self.face_detect = cv.CascadeClassifier('/usr/local/app/project/pi-bot/resource/face-data/haarcascades/haarcascade_frontalface_default.xml')
         self.file_path = file_path
-        self.mode = 0
+        self.infrared_mode = 1
         GPIO.setup(channel, GPIO.OUT)
         GPIO.output(channel, GPIO.HIGH)
 
+    def is_infrared_on(self):
+        return self.infrared_mode == 0
+
     def turn_on_infrared(self):
-        if self.mode == 1:
-            self.mode = 0
+        if self.infrared_mode == 1:
+            self.infrared_mode = 0
             GPIO.output(self.channel, GPIO.LOW)
+            print('摄像头红外模式:on')
 
     def turn_off_infrared(self):
-        if self.mode == 0:
-            self.mode = 1
+        if self.infrared_mode == 0:
+            self.infrared_mode = 1
             GPIO.output(self.channel, GPIO.HIGH)
+            print('摄像头红外模式:off')
 
     def show(self):
         ret, frame = self.cap.read()
         frame = cv.flip(frame, 1)
+        if ret:
+            self.face_detection(frame)
         cv.imshow("frame", frame)
         if cv.waitKey(1) == ord('q'):
             self.off()
@@ -516,3 +524,10 @@ class Camera(Device, ABC):
 
     def off(self):
         self.cap.release()
+
+    def face_detection(self, frame):
+        faces = self.face_detect.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=3, minSize=(32, 32))
+        for x, y, w, h in faces:
+            cv.rectangle(frame, pt1=(x, y), pt2=(x + w, y + h), color=[0, 0, 255], thickness=2)
+            cv.circle(frame, center=(x + w // 2, y + h // 2), radius=w // 2, color=[0, 255, 0], thickness=2)
+        return frame

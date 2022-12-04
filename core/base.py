@@ -1,3 +1,5 @@
+import time
+
 from core import schedule_task
 from core.devices import DeviceManager
 from core.function import FunctionManager, SmokeDetectionFunction, BodyDetectionFunction, ThermometerFunction, \
