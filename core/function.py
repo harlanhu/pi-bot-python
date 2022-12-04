@@ -198,4 +198,4 @@ class VideoOutputFunction(Function, ABC):
         self.camera = camera
 
     def function(self, **kwargs):
-        self.camera.show()
+        self.camera.capture()

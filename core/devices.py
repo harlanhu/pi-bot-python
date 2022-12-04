@@ -512,7 +512,7 @@ class Camera(Device, ABC):
             GPIO.output(self.channel, GPIO.HIGH)
             print('摄像头红外模式:off')
 
-    def show(self):
+    def capture(self):
         ret, frame = self.cap.read()
         frame = cv.flip(frame, 1)
         if ret:
@@ -520,6 +520,7 @@ class Camera(Device, ABC):
         cv.imshow("frame", frame)
         if cv.waitKey(1) == ord('q'):
             self.off()
+        time.sleep(self.cap.get(cv.CAP_PROP_FPS) / 1000)
         return frame
 
     def off(self):
